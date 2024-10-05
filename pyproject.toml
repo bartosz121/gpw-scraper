@@ -1,0 +1,28 @@
+[project]
+name = "gpw-scraper"
+version = "0.1.0"
+description = "gpw scraper"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.10.5",
+    "alembic>=1.13.2",
+    "arq>=0.26.1",
+    "beautifulsoup4>=4.12.3",
+    "fastapi>=0.112.2",
+    "loguru>=0.7.2",
+    "playwright>=1.46.0",
+    "psycopg[binary]>=3.2.1",
+    "pydantic-settings>=2.4.0",
+    "pytest-aiohttp>=1.0.5",
+    "pytest-asyncio>=0.24.0",
+    "pytest>=8.3.2",
+    "redis>=5.0.8",
+    "ruff>=0.6.3",
+    "sqlalchemy[asyncio]>=2.0.32",
+    "uvicorn[standard]",
+]
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
