@@ -1,0 +1,31 @@
+services:
+  api:
+    environment:
+      - ENVIRONMENT=LOCAL
+    command: uvicorn --factory gpw_scraper.api:create_app --host 0.0.0.0 --port 8080 --reload
+    develop:
+      watch:
+        - path: ./uv.lock
+          action: rebuild
+        - path: ./pyproject.toml
+          action: rebuild
+        - path: .
+          target: /app
+          action: sync
+          ignore:
+            - .venv/
+  arq_worker:
+    environment:
+      - ENVIRONMENT=LOCAL
+    command: ["arq", "gpw_scraper.worker.WorkerSettings", "--watch", "/app"]
+    develop:
+      watch:
+        - path: ./uv.lock
+          action: rebuild
+        - path: ./pyproject.toml
+          action: rebuild
+        - path: .
+          target: /app
+          action: sync
+          ignore:
+            - .venv/

@@ -1,0 +1,76 @@
+x-gpw-scraper-environment: &gpw-scraper-environment
+  environment:
+    - ENVIRONMENT=PRODUCTION
+    - DB_SCHEME=postgresql+psycopg
+    - DB_HOST=scraper-db
+    - DB_NAME=gpw_scraper
+    - DB_USER=postgres
+    - DB_PASSWORD=password123
+    - DB_PORT=5432
+    - DB_DATABASE=gpw_scraper
+    - REDIS_HOST=scraper-redis
+    - REDIS_PORT=6379
+    - OPENROUTER_API_KEY=
+    - CLOUDFLARE_AI_API_KEY=
+    - CLOUDFLARE_AI_ACCOUNT_ID=
+    - OPENAI_API_KEY=
+
+services:
+  api:
+    image: gpw-scraper:latest
+    container_name: gpw-scraper
+    build:
+      context: .
+      dockerfile: Dockerfile
+    <<: *gpw-scraper-environment
+    ports:
+      - 8080:8080
+    command: uvicorn --factory gpw_scraper.api:create_app --host 0.0.0.0 --port 8080
+    develop:
+      watch:
+        - path: ./uv.lock
+          action: rebuild
+        - path: ./pyproject.toml
+          action: rebuild
+        - path: .
+          target: /app
+          action: sync
+          ignore:
+            - .venv/
+    depends_on:
+      - db
+      - redis
+  arq_worker:
+    image: gpw-scraper:latest
+    container_name: arq_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    <<: *gpw-scraper-environment
+    command: ["arq", "gpw_scraper.worker.WorkerSettings"]
+    develop:
+      watch:
+        - path: ./uv.lock
+          action: rebuild
+        - path: ./pyproject.toml
+          action: rebuild
+        - path: .
+          target: /app
+          action: sync
+          ignore:
+            - .venv/
+    depends_on:
+      - redis
+  db:
+    image: postgres:16.4-alpine3.20
+    container_name: scraper-db
+    environment:
+      - POSTGRES_DB=gpw_scraper
+      - POSTGRES_PASSWORD=password123
+    ports:
+      - 5432:5432
+  redis:
+    image: redis:7.4.0-alpine
+    container_name: scraper-redis
+    ports:
+      - 6379:6379
