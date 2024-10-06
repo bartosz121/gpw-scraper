@@ -26,17 +26,6 @@ services:
     ports:
       - 8080:8080
     command: uvicorn --factory gpw_scraper.api:create_app --host 0.0.0.0 --port 8080
-    develop:
-      watch:
-        - path: ./uv.lock
-          action: rebuild
-        - path: ./pyproject.toml
-          action: rebuild
-        - path: .
-          target: /app
-          action: sync
-          ignore:
-            - .venv/
     depends_on:
       - db
       - redis
@@ -48,17 +37,6 @@ services:
       dockerfile: Dockerfile
     <<: *gpw-scraper-environment
     command: ["arq", "gpw_scraper.worker.WorkerSettings"]
-    develop:
-      watch:
-        - path: ./uv.lock
-          action: rebuild
-        - path: ./pyproject.toml
-          action: rebuild
-        - path: .
-          target: /app
-          action: sync
-          ignore:
-            - .venv/
     depends_on:
       - redis
   db:
