@@ -88,6 +88,7 @@ async def startup(ctx):
     ctx["redis_client"] = redis.Redis(
         host=settings.REDIS_HOST,
         port=settings.REDIS_PORT,
+        password=settings.REDIS_PASSWORD,
         decode_responses=True,
     )
     ctx["pap_session"] = aiohttp.ClientSession(base_url=EspiEbiPapScraper.url)

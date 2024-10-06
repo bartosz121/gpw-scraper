@@ -102,6 +102,7 @@ class Settings(BaseSettings):
     DB_PORT: int | None = None
 
     REDIS_HOST: str
+    REDIS_PASSWORD: str | None = None
     REDIS_PORT: int
 
     @computed_field
@@ -121,7 +122,11 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def ARQ_REDIS_SETTINGS(self) -> RedisSettings:
-        return RedisSettings(self.REDIS_HOST, self.REDIS_PORT)
+        return RedisSettings(
+            self.REDIS_HOST,
+            self.REDIS_PORT,
+            password=self.REDIS_PASSWORD,
+        )
 
 
 settings = Settings()  # type: ignore
