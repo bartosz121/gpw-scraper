@@ -1,8 +1,10 @@
 from typing import Annotated
 
 from fastapi import Depends
-from gpw_scraper.databases.db import sessionmaker as db_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from gpw_scraper.databases.db import sessionmaker as db_sessionmaker
+from gpw_scraper.services.espi_ebi import SQLAEspiEbiService
 
 
 async def get_db_session():
@@ -17,3 +19,10 @@ async def get_db_session():
 
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
+
+
+def get_espi_ebi_service(db: DbSession) -> SQLAEspiEbiService:
+    return SQLAEspiEbiService(db)
+
+
+EspiEbiService = Annotated[SQLAEspiEbiService, Depends(get_espi_ebi_service)]

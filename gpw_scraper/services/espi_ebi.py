@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from gpw_scraper.models.espi_ebi import EspiEbi
-from gpw_scraper.services.sqlalchemy import SQLAlchemyService
 from sqlalchemy import func as sqla_func
 from sqlalchemy import select
+
+from gpw_scraper.models.espi_ebi import EspiEbi
+from gpw_scraper.services.sqlalchemy import SQLAlchemyService
 
 
 class SQLAEspiEbiService(SQLAlchemyService[EspiEbi, int]):
