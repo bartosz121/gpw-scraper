@@ -1,8 +1,8 @@
 from contextlib import contextmanager
-from typing import Any, Generic, Iterable, Literal, NamedTuple, TypeVar, cast
+from typing import Any, Generic, Iterable, Literal, NamedTuple, TypeVar
 
 from loguru import logger
-from sqlalchemy import Column, Select, asc, desc, select
+from sqlalchemy import Column, Select, asc, desc, select, text
 from sqlalchemy import func as sqla_func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -178,14 +178,14 @@ class SQLAlchemyService(Generic[T, U]):
     ) -> int:
         with sql_error_handler():
             statement = self._get_statement(statement)
-            statement = statement.with_only_columns(
-                sqla_func.count(self._get_model_id_attr()),
-                maintain_column_froms=True,
-            ).select_from(self.model)
             statement = self._where_from_kwargs(statement, **kwargs)
+            statement_count = statement.with_only_columns(
+                sqla_func.count(text("1")),
+                maintain_column_froms=True,
+            )
 
-            result = await self.session.execute(statement)
-            return cast(int, result.scalar_one())
+            result = await self.session.execute(statement_count)
+            return result.scalar_one()
 
     async def create(
         self,
@@ -292,18 +292,14 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> tuple[list[T], int]:
-        statement = self._get_statement(statement)
-        statement = self._where_from_kwargs(statement, **kwargs)
-        statement = self._paginate_from_kwargs(statement, **kwargs)
-        statement = self._order_by_from_kwargs(statement, **kwargs)
-
-        count_statement = statement.with_only_columns(sqla_func.count()).select_from(
-            self.model
-        )
+        stmt = self._get_statement(statement)
+        stmt = self._where_from_kwargs(stmt, **kwargs)
+        stmt = self._paginate_from_kwargs(stmt, **kwargs)
+        stmt = self._order_by_from_kwargs(stmt, **kwargs)
 
         with sql_error_handler():
-            count_result = (await self.session.execute(count_statement)).scalar() or 0
-            items = list((await self.session.execute(statement)).scalars())
+            count_result = await self.count(statement, **kwargs)
+            items = list((await self.session.execute(stmt)).scalars())
 
             for item in items:
                 self._expunge(item, auto_expunge=auto_expunge)
