@@ -9,7 +9,7 @@ import aiohttp
 import pydantic
 from loguru import logger
 
-from gpw_scraper.schemas.espi import EspiLLMSummary
+from gpw_scraper.schemas.espi_ebi import EspiLLMSummary
 
 ESPI_DESCRIPTION = """ESPI, or the Electronic Information Transmission System, is a platform used by public companies in Poland
  to disclose important regulatory information to the market. It is similar to the SEC's EDGAR system in the United States.

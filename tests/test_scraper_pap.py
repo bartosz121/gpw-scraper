@@ -2,7 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 from gpw_scraper.llm import LLMClientManaged, ModelManager
-from gpw_scraper.schemas.espi import EspiLLMSummary
+from gpw_scraper.schemas.espi_ebi import EspiLLMSummary
 from gpw_scraper.scrapers.pap import EspiEbiPapScraper
 
 
