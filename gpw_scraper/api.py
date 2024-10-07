@@ -3,6 +3,8 @@ from typing import AsyncIterator, TypedDict
 
 from fastapi import FastAPI
 
+from gpw_scraper.routers.espi_ebi import router as espi_ebi_router
+
 
 class State(TypedDict): ...
 
@@ -18,5 +20,7 @@ def create_app() -> FastAPI:
     @app.get("/")
     async def index():
         return {"msg": "ok"}
+
+    app.include_router(espi_ebi_router, prefix="/api/v1")
 
     return app
