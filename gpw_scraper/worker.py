@@ -79,6 +79,8 @@ async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
         except ConflictError as exc:
             logger.error(str(exc))
 
+        await espi_ebi_service.session.close()
+
 
 async def cron_scrape_pap_espi_ebi(ctx):
     await scrape_pap_espi_ebi(ctx, datetime.now(), datetime.now())
