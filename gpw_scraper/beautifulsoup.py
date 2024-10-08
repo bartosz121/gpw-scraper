@@ -42,3 +42,25 @@ class BeautifulSoup(BeautifulSoupBase):
             return None
         text = el.text.replace("\n", " ").strip()
         return text
+
+    def pap_espi_get_content(self) -> str | None:
+        def string_pl(tag):
+            return tag.name == "tr" and tag.find(string="Treść raportu:") is not None
+
+        def string_en(tag):
+            return (
+                tag.name == "tr"
+                and tag.find(string="Contents of the report:") is not None
+            )
+
+        tr_with_heading = self.find(string_pl)
+        if tr_with_heading is None:
+            tr_with_heading = self.find(string_en)
+            if tr_with_heading is None:
+                return None
+
+        next_tr_with_content = tr_with_heading.find_next_sibling("tr")
+        if next_tr_with_content is None:
+            return None
+
+        return next_tr_with_content.text

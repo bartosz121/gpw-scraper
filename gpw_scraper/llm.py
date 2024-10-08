@@ -244,6 +244,16 @@ class LLMClient:
         )
         return llm_summary, model
 
+    @staticmethod
+    def is_llm_espi_summary_valid(item: EspiLLMSummary) -> bool:
+        """
+        Sanity check for LLM response
+        """
+        if "Summary of the ESPI report" in item.description:
+            return False
+
+        return True
+
 
 class LLMClientManaged(LLMClient):
     _manager: ModelManager
@@ -299,7 +309,13 @@ class LLMClientManaged(LLMClient):
                             await asyncio.sleep(sleep_amount)
                         continue
                     else:
-                        logger.debug(f"[{hash}] returning valid llm response")
+                        if not LLMClient.is_llm_espi_summary_valid(result[0]):
+                            logger.debug(
+                                f"[{hash}] LLM respone not valid, trying again"
+                            )
+                            continue
+
+                        logger.debug(f"[{hash}] Received valid LLM response")
                         return result
                 else:
                     # TODO: skip model at this point

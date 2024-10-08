@@ -189,7 +189,6 @@ class EspiEbiPapScraper:
         self, url: str, soup: BeautifulSoup, clients: Sequence[llm.LLMClientManaged]
     ) -> EspiEbiScrapedInfo:
         logger.info(f"{url} Parsing ESPI item")
-
         logger.debug(f"{url} Looking for item title in html")
 
         item_title_from_header = soup.pap_get_item_title_from_h1()
@@ -199,9 +198,14 @@ class EspiEbiPapScraper:
             (soup.find("td", string="Tytuł"))
         )
         if item_title_from_content is not None:
-            item_title_from_content = item_title_from_content.lstrip("Tytuł:").strip()
-
+            item_title_from_content = item_title_from_content.lstrip(
+                "Tytuł:"
+            ).strip()  # FIXME: yikes
         logger.debug(f"{item_title_from_content=}")
+
+        logger.debug(f"{url} Looking for espi content")
+        item_content = soup.pap_espi_get_content()
+        logger.debug(f"{item_content=}")
 
         logger.debug(f"{url} Looking for company name")
         company_name = soup.pap_get_text_from_tr(
@@ -219,17 +223,18 @@ class EspiEbiPapScraper:
             raise ValueError(msg)
 
         item_title = item_title_from_header or item_title_from_content
-        item_description = None
+        item_description = item_content
         llm_model = None
 
-        logger.debug(f"{url} Asking LLM for ESPI summary")
-        for client in clients:
-            result = await client.get_espi_summary_until_valid(page_content.text)
-            if result is not None:
-                item_title = item_title or result[0].title
-                item_description = result[0].description
-                llm_model = result[1]
-                break
+        if item_title is None or item_description is None:
+            logger.debug(f"{url} Asking LLM for ESPI title and description")
+            for client in clients:
+                result = await client.get_espi_summary_until_valid(page_content.text)
+                if result is not None:
+                    item_title = item_title or result[0].title
+                    item_description = item_description or result[0].description
+                    llm_model = result[1]
+                    break
 
         if item_title is None:
             raise ValueError(f"{url} item title is None")
