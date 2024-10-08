@@ -239,6 +239,10 @@ class EspiEbiPapScraper:
         if item_title is None:
             raise ValueError(f"{url} item title is None")
 
+        item_title = utils.normalize_raw_text(item_title)
+        if item_description:
+            item_description = utils.normalize_raw_text(item_description)
+
         return EspiEbiScrapedInfo(
             type="ESPI",
             title=item_title,
@@ -277,7 +281,8 @@ class EspiEbiPapScraper:
             logger.error(msg)
             raise ValueError(msg)
 
-        item_content = item_content_div.text.strip()
+        item_title = utils.normalize_raw_text(item_title)
+        item_content = utils.normalize_raw_text(item_content_div.text)
 
         return EspiEbiScrapedInfo(
             type="EBI",

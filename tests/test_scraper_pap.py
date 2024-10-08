@@ -11,7 +11,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560617": {
             "type": "ESPI",
             "title": "Podsumowanie kosztów VI Programu Emisji Obligacji",
-            "description": "\n\nZarząd PCC EXOL SA z si",
+            "description": "Zarząd PCC EXOL SA z sied",
             "company": "PCC EXOL SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560617",
             "parsed_by_llm": None,
@@ -20,7 +20,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560616": {
             "type": "ESPI",
             "title": "Podsumowanie kosztów VIII Programu Emisji Obligacji",
-            "description": "\n\nZarząd PCC Rokita SA z ",
+            "description": "Zarząd PCC Rokita SA z si",
             "company": "PCC ROKITA SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560616",
             "parsed_by_llm": None,
@@ -38,7 +38,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560615": {
             "type": "ESPI",
             "title": "Transakcje wykonane w ramach realizacji Programu Odkupu akcji własnych",
-            "description": '\n\nAmRest Holdings SE ("Am',
+            "description": 'AmRest Holdings SE ("AmRe',
             "company": "AmRest Holdings SE",
             "source": "https://espiebi.pap.pl/node/560615",
             "parsed_by_llm": None,
@@ -47,7 +47,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560614": {
             "type": "ESPI",
             "title": "Zamknięcie obrad Zwyczajnego Zgromadzenia Akcjonariuszy Spółki z dnia 22 lipca 2024 roku zwołanego na godzinę 16:00 bez podejmowania uchwał",
-            "description": "\n\nZarząd Korporacji Gospo",
+            "description": "Zarząd Korporacji Gospoda",
             "company": "KORPORACJA GOSPODARCZA EFEKT SA",
             "source": "https://espiebi.pap.pl/node/560614",
             "parsed_by_llm": None,
@@ -65,7 +65,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560613": {
             "type": "ESPI",
             "title": "Doręczenie Spółce odpisu nakazu zapłaty",
-            "description": "\n\nZarząd REMOR SOLAR POLS",
+            "description": "Zarząd REMOR SOLAR POLSKA",
             "company": "REMOR SOLAR SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560613",
             "parsed_by_llm": None,
@@ -74,7 +74,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560612": {
             "type": "ESPI",
             "title": "Wykup i umorzenie obligacji serii F",
-            "description": "\n\nZarząd CI Games SE z si",
+            "description": "Zarząd CI Games SE z sied",
             "company": "CI GAMES SPÓŁKA EUROPEJSKA",
             "source": "https://espiebi.pap.pl/node/560612",
             "parsed_by_llm": None,
@@ -83,7 +83,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560611": {
             "type": "ESPI",
             "title": "Nabycie udziaów w Spółce hiPower Labs",
-            "description": "\n\nZarząd hiPower Energy S",
+            "description": "Zarząd hiPower Energy S.A",
             "company": "Arena.pl SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560611",
             "parsed_by_llm": None,
@@ -92,7 +92,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560610": {
             "type": "ESPI",
             "title": "Warunkowa autoryzacja Europejskiej Agencji Leków badania klinicznego fazy II w projekcie PreTreg (cukrzyca przedobjawowa typu 1)",
-            "description": "\n\nZarząd spółki PolTREG S",
+            "description": "Zarząd spółki PolTREG S.A",
             "company": "POLTREG SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560610",
             "parsed_by_llm": None,
@@ -101,7 +101,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560609": {
             "type": "ESPI",
             "title": "Acquisition of a Large Shareholding_JTFG, RMSM, Forest Hill Company",
-            "description": "\n\nAcquisition of a Large ",
+            "description": "Acquisition of a Large Sh",
             "company": "TATRY MOUNTAIN RESORTS, A.S.",
             "source": "https://espiebi.pap.pl/node/560609",
             "parsed_by_llm": None,
@@ -110,7 +110,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560608": {
             "type": "ESPI",
             "title": "Zamknięcie lokalu w Browarach Warszawskich_operator K7 Sp. z o.o.",
-            "description": "\n\nZarząd Spółki SAKANA S.",
+            "description": "Zarząd Spółki SAKANA S.A.",
             "company": "SAKANA SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560608",
             "parsed_by_llm": None,
@@ -119,7 +119,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560607": {
             "type": "ESPI",
             "title": "Wykaz akcjonariuszy posiadających powyżej 5% głosów na Nadzwyczajnym Walnym Zgromadzeniu",
-            "description": "\n\nZarząd spółki ManyDev S",
+            "description": "Zarząd spółki ManyDev Stu",
             "company": "ManyDev Studio SPÓŁKA EUROPEJSKA",
             "source": "https://espiebi.pap.pl/node/560607",
             "parsed_by_llm": None,
@@ -128,7 +128,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560606": {
             "type": "ESPI",
             "title": "Uchwały podjęte przez Nadzwyczajne Walne Zgromadzenie Spółki",
-            "description": "\n\nZarząd spółki ManyDev S",
+            "description": "Zarząd spółki ManyDev Stu",
             "company": "ManyDev Studio SPÓŁKA EUROPEJSKA",
             "source": "https://espiebi.pap.pl/node/560606",
             "parsed_by_llm": None,
@@ -155,7 +155,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560605": {
             "type": "ESPI",
             "title": "Zawarcie przez spółkę zależną umowy ramowej dla linii wieloproduktowej z mBank S.A.",
-            "description": '\n\nZarząd Dekpol S.A. ("Em',
+            "description": 'Zarząd Dekpol S.A. ("Emit',
             "company": "DEKPOL SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560605",
             "parsed_by_llm": None,
@@ -164,7 +164,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560604": {
             "type": "ESPI",
             "title": "OPERATIONS UPDATE FOR THE THREE MONTHS ENDED 30 JUNE 2024",
-            "description": "\n\nKernel Holding S.A. inf",
+            "description": "Kernel Holding S.A. infor",
             "company": "KERNEL HOLDING S.A.",
             "source": "https://espiebi.pap.pl/node/560604",
             "parsed_by_llm": None,
@@ -182,7 +182,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560603": {
             "type": "ESPI",
             "title": "Nabycie akcji przez osobę zarządzającą",
-            "description": "\n\nZarząd PKP CARGO S.A. (",
+            "description": 'Zarząd PKP CARGO S.A. ("S',
             "company": "PKP CARGO SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560603",
             "parsed_by_llm": None,
@@ -200,7 +200,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560601": {
             "type": "ESPI",
             "title": "Skup Akcji Własnych",
-            "description": "\n\nZarząd MONNARI TRADE S.",
+            "description": "Zarząd MONNARI TRADE S.A.",
             "company": "MONNARI TRADE Spółka Akcyjna",
             "source": "https://espiebi.pap.pl/node/560601",
             "parsed_by_llm": None,
@@ -209,7 +209,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560600": {
             "type": "ESPI",
             "title": "Zawarcie przyrzeczonych umów sprzedaży akcji Spółki oraz umowy akcjonariuszy",
-            "description": '\n\nZarząd Sescom S.A. ("Sp',
+            "description": 'Zarząd Sescom S.A. ("Spół',
             "company": "SESCOM SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560600",
             "parsed_by_llm": None,
@@ -218,7 +218,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560599": {
             "type": "ESPI",
             "title": "Zmiany w Radzie Nadzorczej Spółki",
-            "description": "\n\nZarząd Spółki Polwax S.",
+            "description": "Zarząd Spółki Polwax S.A.",
             "company": "POLWAX SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560599",
             "parsed_by_llm": None,
@@ -227,7 +227,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560598": {
             "type": "ESPI",
             "title": "Zawarcie przez jednostkę zależną Spółki umowy kredytu",
-            "description": "\n\nZarząd Kredyt Inkaso S.",
+            "description": "Zarząd Kredyt Inkaso S.A.",
             "company": "KREDYT INKASO SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560598",
             "parsed_by_llm": None,
@@ -236,7 +236,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560597": {
             "type": "ESPI",
             "title": "Informacja o transakcjach wykonywanych przez osobę blisko związaną z osobami pełniącymi obowiązki zarządcze",
-            "description": "\n\nDr. Miele Cosmed Group ",
+            "description": "Dr. Miele Cosmed Group S.",
             "company": "Dr. Miele Cosmed Group Spółka Akcyjna",
             "source": "https://espiebi.pap.pl/node/560597",
             "parsed_by_llm": None,
@@ -245,7 +245,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560596": {
             "type": "ESPI",
             "title": "Szacunkowe wyniki za pierwsze półrocze 2024 roku",
-            "description": "\n\nZarząd NOVITA S.A. z si",
+            "description": "Zarząd NOVITA S.A. z sied",
             "company": "NOVITA SA",
             "source": "https://espiebi.pap.pl/node/560596",
             "parsed_by_llm": None,
@@ -254,7 +254,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560595": {
             "type": "ESPI",
             "title": "Zawarcie istotnej umowy",
-            "description": "\n\nW nawiązaniu do Raportu",
+            "description": "W nawiązaniu do Raportu E",
             "company": "ECO5TECH SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560595",
             "parsed_by_llm": None,
@@ -263,7 +263,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560594": {
             "type": "ESPI",
             "title": "Wstępne wyniki produkcyjne i sprzedażowe Grupy KGHM Polska Miedź S.A. za czerwiec 2024 r.",
-            "description": "\n\nZarząd KGHM Polska Mied",
+            "description": "Zarząd KGHM Polska Miedź ",
             "company": "KGHM POLSKA MIEDŹ SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560594",
             "parsed_by_llm": None,
@@ -272,7 +272,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560593": {
             "type": "ESPI",
             "title": "Podjęcie przez Zarząd Spółki uchwały w sprawie przeprowadzenia skupu akcji własnych Spółki w związku z programem motywacyjnym",
-            "description": "\n\nZarząd Lena Lighting S.",
+            "description": "Zarząd Lena Lighting S.A.",
             "company": "LENA LIGHTING SA",
             "source": "https://espiebi.pap.pl/node/560593",
             "parsed_by_llm": None,
@@ -281,7 +281,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560592": {
             "type": "ESPI",
             "title": "Rozszerzenie współpracy w ramach umowy ramowej z Voodoo",
-            "description": "\n\nW nawiązaniu do raportu",
+            "description": "W nawiązaniu do raportu b",
             "company": "QUBICGAMES SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560592",
             "parsed_by_llm": None,
@@ -290,7 +290,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560591": {
             "type": "ESPI",
             "title": "Otrzymanie zawiadomienia w trybie art. 69 ustawy o ofercie publicznej - zwiększenie stanu posiadanego udziału w ogólnej liczbie głosów w Spółce",
-            "description": '\n\nZarząd G-DEVS S.A. "Spó',
+            "description": 'Zarząd G-DEVS S.A. "Spółk',
             "company": "G-Devs Spółka Akcyjna",
             "source": "https://espiebi.pap.pl/node/560591",
             "parsed_by_llm": None,
@@ -299,7 +299,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560590": {
             "type": "ESPI",
             "title": "Rozpoczęcie nabywania akcji własnych w ramach Programu Skupu Akcji Własnych 2024",
-            "description": "\n\nW nawiązaniu do raportu",
+            "description": "W nawiązaniu do raportu b",
             "company": "BBI DEVELOPMENT SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560590",
             "parsed_by_llm": None,
@@ -308,7 +308,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560589": {
             "type": "ESPI",
             "title": "Terminy przekazywania raportów okresowych w roku obrotowym 2024/2025",
-            "description": "\n\nZgodnie z § 80 ust. 1 r",
+            "description": "Zgodnie z § 80 ust. 1 roz",
             "company": "AMBRA S.A.",
             "source": "https://espiebi.pap.pl/node/560589",
             "parsed_by_llm": None,
@@ -317,7 +317,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560588": {
             "type": "ESPI",
             "title": "Transakcje na akcjach Emitenta dokonane przez osobę pełniącą obowiązki zarządcze",
-            "description": '\n\nZarząd G-DEVS S.A. "Emi',
+            "description": 'Zarząd G-DEVS S.A. "Emite',
             "company": "G-Devs Spółka Akcyjna",
             "source": "https://espiebi.pap.pl/node/560588",
             "parsed_by_llm": None,
@@ -326,7 +326,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560587": {
             "type": "ESPI",
             "title": "Zgoda Komisji Nadzoru Finansowego na powołanie Pana Mirosława Czekaja na stanowisko Prezesa Zarządu Banku Gospodarstwa Krajowego.",
-            "description": "\n\nPodstawa prawna:§ 5 pkt",
+            "description": "Podstawa prawna:§ 5 pkt 5",
             "company": "BANK GOSPODARSTWA KRAJOWEGO",
             "source": "https://espiebi.pap.pl/node/560587",
             "parsed_by_llm": None,
@@ -335,7 +335,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560586": {
             "type": "ESPI",
             "title": "Zgoda Komisji Nadzoru Finansowego na powołanie Pana Mirosława Czekaja na stanowisko Prezesa Zarządu Banku Gospodarstwa Krajowego.",
-            "description": "\n\nPodstawa prawna:§ 5 pkt",
+            "description": "Podstawa prawna:§ 5 pkt 5",
             "company": "BANK GOSPODARSTWA KRAJOWEGO",
             "source": "https://espiebi.pap.pl/node/560586",
             "parsed_by_llm": None,
@@ -344,7 +344,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560585": {
             "type": "ESPI",
             "title": "Informacja o transakcjach uzyskana w trybie art. 19 MAR",
-            "description": "\n\nKRUK S.A. (Emitent) inf",
+            "description": "KRUK S.A. (Emitent) infor",
             "company": "KRUK SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560585",
             "parsed_by_llm": None,
@@ -353,7 +353,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560584": {
             "type": "ESPI",
             "title": "Uchwały Nadzwyczajnego Walnego Zgromadzenia Spółki zwołanego na dzień 25 czerwca 2024 roku podjęte po wznowieniu obrad w dniu 22 lipca 2024 roku",
-            "description": "\n\nZarząd Spółki Polwax S.",
+            "description": "Zarząd Spółki Polwax S.A.",
             "company": "POLWAX SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560584",
             "parsed_by_llm": None,
@@ -407,7 +407,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560578": {
             "type": "ESPI",
             "title": "Podpisanie umowy na zaprojektowanie i budowę drogi ekspresowej S11 na odcinku Kępno - granica województwa opolskiego, odc. II, Siemianice - Gotartów",
-            "description": "\n\nZarząd MIRBUD S.A. (dal",
+            "description": "Zarząd MIRBUD S.A. (dalej",
             "company": "MIRBUD SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560578",
             "parsed_by_llm": None,
@@ -452,7 +452,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560573": {
             "type": "ESPI",
             "title": "Zgoda Rady Nadzorczej JSW S.A. na umorzenie Certyfikatów Inwestycyjnych JSW Stabilizacyjnego Funduszu Inwestycyjnego Zamkniętego w ramach ustalonego na 2024 rok limitu",
-            "description": "\n\nZarząd Jastrzębskiej Sp",
+            "description": "Zarząd Jastrzębskiej Spół",
             "company": "JASTRZĘBSKA SPÓŁKA WĘGLOWA SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560573",
             "parsed_by_llm": None,
@@ -461,7 +461,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560572": {
             "type": "ESPI",
             "title": "Sales revenues for June 2024",
-            "description": '\n\n"Sopharma" AD (the Comp',
+            "description": '"Sopharma" AD (the Compan',
             "company": "SOPHARMA AD",
             "source": "https://espiebi.pap.pl/node/560572",
             "parsed_by_llm": None,
@@ -470,7 +470,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560571": {
             "type": "ESPI",
             "title": "Sprostowanie tytułu raportu nr 9/2024 z dnia 19 lipca 2024 roku",
-            "description": "\n\nZarząd spółki Eurosnack",
+            "description": "Zarząd spółki Eurosnack S",
             "company": "EUROSNACK SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560571",
             "parsed_by_llm": None,
@@ -479,7 +479,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560570": {
             "type": "ESPI",
             "title": "Rezygnacja członka Rady Nadzorczej Unibep S.A.",
-            "description": "\n\nZarząd Unibep S.A. [Emi",
+            "description": "Zarząd Unibep S.A. [Emite",
             "company": "UNIBEP SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560570",
             "parsed_by_llm": None,
@@ -488,7 +488,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560569": {
             "type": "ESPI",
             "title": "Transakcja zrealizowana przez osobę pełniącą obowiązki zarządcze",
-            "description": "\n\nZarząd Prymus S.A. z si",
+            "description": "Zarząd Prymus S.A. z sied",
             "company": "PRYMUS SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560569",
             "parsed_by_llm": None,
@@ -497,7 +497,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560568": {
             "type": "ESPI",
             "title": "Nabycie akcji własnych",
-            "description": '\n\nZarząd "MERCOR" S.A. ("',
+            "description": 'Zarząd "MERCOR" S.A. ("Em',
             "company": "MERCOR SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560568",
             "parsed_by_llm": None,
@@ -506,7 +506,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560567": {
             "type": "ESPI",
             "title": "Opinia Zarządu w przedmiocie uzasadnienia wyłączenia prawa poboru akcji serii J oraz sposobu ustalenia ceny emisyjnej akcji serii J",
-            "description": "\n\nKorekta raportu wynika ",
+            "description": "Korekta raportu wynika z ",
             "company": "ManyDev Studio SPÓŁKA EUROPEJSKA",
             "source": "https://espiebi.pap.pl/node/560567",
             "parsed_by_llm": None,
@@ -515,7 +515,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560566": {
             "type": "ESPI",
             "title": "Żądanie akcjonariusza umieszczania określonych spraw w porządku obrad walnego zgromadzenia",
-            "description": "\n\nZarząd Novina S.A. z si",
+            "description": "Zarząd Novina S.A. z sied",
             "company": "NOVINA SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560566",
             "parsed_by_llm": None,
@@ -524,7 +524,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560565": {
             "type": "ESPI",
             "title": "Opinia Zarządu w przedmiocie uzasadnienia wyłączenia prawa poboru akcji serii J oraz sposobu ustalenia ceny emisyjnej akcji serii J",
-            "description": "\n\nZarząd Manydev studio S",
+            "description": "Zarząd Manydev studio SE ",
             "company": "ManyDev Studio SPÓŁKA EUROPEJSKA",
             "source": "https://espiebi.pap.pl/node/560565",
             "parsed_by_llm": None,
@@ -533,7 +533,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560564": {
             "type": "ESPI",
             "title": "Zgłoszenie kandydata na członka Rady Nadzorczej",
-            "description": "\n\nZarząd Benefit Systems ",
+            "description": "Zarząd Benefit Systems S.",
             "company": "BENEFIT SYSTEMS SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560564",
             "parsed_by_llm": None,
@@ -542,7 +542,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560563": {
             "type": "ESPI",
             "title": "Odmowa rejestracji umowy o utworzeniu Podatkowej Grupy Kapitałowej - podtrzymanie decyzji",
-            "description": "\n\nZarząd Komputronik S.A.",
+            "description": "Zarząd Komputronik S.A. (",
             "company": "KOMPUTRONIK SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560563",
             "parsed_by_llm": None,
@@ -569,7 +569,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560560": {
             "type": "ESPI",
             "title": "Informacja o szacunkowych miesięcznych skonsolidowanych przychodach za czerwiec 2024 r.",
-            "description": "\n\nRada Dyrektorów ASBISc ",
+            "description": "Rada Dyrektorów ASBISc En",
             "company": "ASBISc ENTERPRISES PLC",
             "source": "https://espiebi.pap.pl/node/560560",
             "parsed_by_llm": None,
@@ -578,7 +578,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560559": {
             "type": "ESPI",
             "title": 'Wykaz akcjonariuszy posiadających co najmniej 5% głosów na Zwyczajnym Walnym Zgromadzeniu Akcjonariuszy spółki Giełda Praw Majątkowych "Vindexus" S. A. w Warszawie zwołanym na dzień 21 czerwca 2024 roku, które po dwóch przerwach...',
-            "description": "\n\nZarząd Spółki Giełda Pr",
+            "description": "Zarząd Spółki Giełda Praw",
             "company": "GIEŁDA PRAW MAJĄTKOWYCH VINDEXUS SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560559",
             "parsed_by_llm": None,
@@ -587,7 +587,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560558": {
             "type": "ESPI",
             "title": "Uchwały podjęte przez Zwyczajne Walne Zgromadzenie w dniu 19 lipca 2024 r.",
-            "description": "\n\nZarząd Giełdy Praw Mają",
+            "description": "Zarząd Giełdy Praw Majątk",
             "company": "GIEŁDA PRAW MAJĄTKOWYCH VINDEXUS SPÓŁKA AKCYJNA",
             "source": "https://espiebi.pap.pl/node/560558",
             "parsed_by_llm": None,
