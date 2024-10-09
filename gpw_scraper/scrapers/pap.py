@@ -47,6 +47,7 @@ class EspiEbiPapScraper:
         created_param = date.strftime("%Y-%m-%d")
         end_date_param = created_param
         pap_being_stupid = False
+        pap_being_stupid_2 = False
         page = 0
 
         hrefs: list[PapHrefItem] = []
@@ -78,6 +79,14 @@ class EspiEbiPapScraper:
                     pap_being_stupid = True
                     created_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
                     end_date_param = created_param
+                    continue
+                if pap_being_stupid_2 is False:
+                    logger.info(
+                        "Trying real date in created and +1 day in end, maybe pap espi ebi page is stupid? (squared)"
+                    )
+                    pap_being_stupid_2 = True
+                    created_param = date.strftime("%Y-%m-%d")
+                    end_date_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
                     continue
                 break
 
