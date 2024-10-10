@@ -72,22 +72,23 @@ class EspiEbiPapScraper:
             day_h2 = soup.find("h2", string=date_str)
             if day_h2 is None:
                 logger.info(f"h2 with {date_str} not found at {response.url!s}")
-                if pap_being_stupid is False:
-                    logger.info(
-                        "Trying +1 day in created and end url param, maybe pap espi ebi page is stupid?"
-                    )
-                    pap_being_stupid = True
-                    created_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
-                    end_date_param = created_param
-                    continue
-                if pap_being_stupid_2 is False:
-                    logger.info(
-                        "Trying real date in created and +1 day in end, maybe pap espi ebi page is stupid? (squared)"
-                    )
-                    pap_being_stupid_2 = True
-                    created_param = date.strftime("%Y-%m-%d")
-                    end_date_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
-                    continue
+                if page == 0:
+                    if pap_being_stupid is False:
+                        logger.info(
+                            "Trying +1 day in created and end url param, maybe pap espi ebi page is stupid?"
+                        )
+                        pap_being_stupid = True
+                        created_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
+                        end_date_param = created_param
+                        continue
+                    if pap_being_stupid_2 is False:
+                        logger.info(
+                            "Trying real date in created and +1 day in end, maybe pap espi ebi page is stupid? (squared)"
+                        )
+                        pap_being_stupid_2 = True
+                        created_param = date.strftime("%Y-%m-%d")
+                        end_date_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
+                        continue
                 break
 
             logger.debug("Looking for ul with items")
