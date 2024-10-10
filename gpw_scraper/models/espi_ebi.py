@@ -1,8 +1,10 @@
 import enum
 from datetime import datetime
 
+from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
+from gpw_scraper import utils
 from gpw_scraper.models.base import BaseModel
 
 
@@ -22,3 +24,6 @@ class EspiEbi(BaseModel):
     source: Mapped[str] = mapped_column(unique=True)
     parsed_by_llm: Mapped[str | None] = mapped_column()
     date: Mapped[datetime] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=utils.utc_now
+    )
