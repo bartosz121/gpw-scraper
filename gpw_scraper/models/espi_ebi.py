@@ -8,7 +8,7 @@ from gpw_scraper import utils
 from gpw_scraper.models.base import BaseModel
 
 
-class EntryType(enum.Enum):
+class EntryType(str, enum.Enum):
     ESPI = "espi"
     EBI = "ebi"
 

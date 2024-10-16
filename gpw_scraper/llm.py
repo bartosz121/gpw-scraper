@@ -186,6 +186,9 @@ class LLMClient:
         logger.debug("__aexit__ closing client")
         await self._client.close()
 
+    async def close(self):
+        await self._client.close()
+
     def __del__(self):
         if not self._client.closed:
             logger.debug("__del__ closing client")

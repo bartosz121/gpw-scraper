@@ -1,13 +1,24 @@
 from datetime import datetime
+from typing import TypedDict
+from unittest.mock import AsyncMock, patch
 
+import pytest
+from aiohttp import web
 from arq.connections import ArqRedis
 from arq.worker import Worker
 from redis.asyncio import Redis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from gpw_scraper.config import settings
 from gpw_scraper.llm import LLMClientManaged, ModelManager
-from gpw_scraper.worker import scrape_pap_espi_ebi
+from gpw_scraper.models import espi_ebi as espi_ebi_models
+from gpw_scraper.models import webhook as webhook_models
+from gpw_scraper.worker import (
+    dispatch_send_webhook_tasks,
+    scrape_pap_espi_ebi,
+    send_webhook,
+)
 
 
 async def test_worker_job_scrape_pap_espi_ebi(
@@ -100,3 +111,202 @@ async def test_worker_job_scrape_pap_espi_ebi(
     assert openai_session._manager._failure_count["respond_with_500"].count == 0
     assert openai_session._manager._failure_count["model_1"].count == 0
     assert openai_session._manager._failure_count["model_2"].count == 0
+
+
+class WebhookDbData(TypedDict):
+    espi_ebi: list[espi_ebi_models.EspiEbi]
+    users: list[webhook_models.WebhookUser]
+    endpoints: list[webhook_models.WebhookEndpoint]
+
+
+@pytest.fixture(scope="function")
+async def webhook_tests_db_data(db_session: AsyncSession) -> WebhookDbData:
+    espi_ebi = [
+        espi_ebi_models.EspiEbi(
+            type="espi",
+            title="title",
+            description="description",
+            company="company",
+            source="source",
+            date=datetime(year=2024, month=1, day=1),
+        )
+    ]
+    db_session.add_all(espi_ebi)
+    await db_session.flush()
+
+    users = [
+        webhook_models.WebhookUser(name=f"user{i}", api_key=f"api-key-{i}")
+        for i in range(3)
+    ]
+    db_session.add_all(users)
+    await db_session.flush()
+
+    endpoints = [
+        webhook_models.WebhookEndpoint(
+            url="http://doesnt-exist", secret="secret", user_id=users[0].id
+        ),
+        webhook_models.WebhookEndpoint(
+            url="http://127.0.0.1:6666/400", secret="secret", user_id=users[0].id
+        ),
+        webhook_models.WebhookEndpoint(
+            url="http://127.0.0.1:6666/200", secret="secret", user_id=users[1].id
+        ),
+    ]
+
+    db_session.add_all(endpoints)
+    await db_session.commit()
+
+    return {"espi_ebi": espi_ebi, "users": users, "endpoints": endpoints}
+
+
+@patch("gpw_scraper.worker.create_pool")
+async def test_dispatch_webhook_tasks(
+    mock_create_pool, webhook_tests_db_data, db_sessionmaker, arq_pool: ArqRedis
+):
+    mock_pool = AsyncMock()
+    mock_create_pool.return_value = mock_pool
+
+    async def startup(ctx):
+        ctx["db_sessionmaker"] = db_sessionmaker
+
+    worker = Worker(
+        on_startup=startup,
+        functions=[dispatch_send_webhook_tasks],
+        burst=True,
+        poll_delay=0,
+        queue_read_limit=10,
+        redis_settings=settings.ARQ_REDIS_SETTINGS,
+    )
+    await arq_pool.enqueue_job(
+        "dispatch_send_webhook_tasks", webhook_tests_db_data["espi_ebi"][0].id
+    )
+    await worker.main()
+
+    assert mock_pool.enqueue_job.call_count == 3
+    assert all(
+        call.args[1] == webhook_tests_db_data["espi_ebi"][0]
+        for call in mock_pool.enqueue_job.call_args_list
+    )
+    assert set(call.args[2].id for call in mock_pool.enqueue_job.call_args_list) == set(
+        endpoint.id for endpoint in webhook_tests_db_data["endpoints"]
+    )
+
+
+@pytest.fixture
+async def webhook_api():
+    async def response_200(request: web.Request) -> web.Response:
+        return web.Response(body="ok", status=200)
+
+    async def response_400(request: web.Request) -> web.Response:
+        raise web.HTTPBadRequest()
+
+    app = web.Application()
+    app.router.add_post("/200", response_200)
+    app.router.add_post("/400", response_400)
+
+    from aiohttp.test_utils import TestClient, TestServer
+
+    client = TestClient(TestServer(app, port=6666))
+    await client.start_server()
+
+    yield
+
+    await client.close()
+
+
+async def test_send_webhook(
+    webhook_api,
+    webhook_tests_db_data,
+    db_sessionmaker,
+    db_session: AsyncSession,
+    arq_pool: ArqRedis,
+):
+    async def startup(ctx):
+        ctx["db_sessionmaker"] = db_sessionmaker
+
+    worker = Worker(
+        on_startup=startup,
+        functions=[send_webhook],
+        burst=True,
+        poll_delay=0,
+        queue_read_limit=10,
+        redis_settings=settings.ARQ_REDIS_SETTINGS,
+    )
+
+    # dry run
+    await arq_pool.enqueue_job(
+        "send_webhook",
+        webhook_tests_db_data["espi_ebi"][0],
+        webhook_tests_db_data["endpoints"][0],
+        dry_run=True,
+    )
+    await worker.main()
+
+    event = (
+        await db_session.execute(
+            select(webhook_models.WebhookEvent)
+            .order_by(webhook_models.WebhookEvent.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one()
+    assert event.type == webhook_models.WebhookEventType.delivery_success
+    assert event.http_code == 200
+    assert event.meta == {"dry_run": True}
+
+    # aiohttp.ClientResponseError
+    await arq_pool.enqueue_job(
+        "send_webhook",
+        webhook_tests_db_data["espi_ebi"][0],
+        webhook_tests_db_data["endpoints"][1],
+    )
+    await worker.main()
+    event = (
+        await db_session.execute(
+            select(webhook_models.WebhookEvent)
+            .order_by(webhook_models.WebhookEvent.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one()
+    assert event.type == webhook_models.WebhookEventType.delivery_fail_response
+    assert event.http_code == 400
+    assert (
+        event.meta is not None and event.meta["exception_type"] == "ClientResponseError"
+    )
+
+    # aiohttp.ClientError
+    await arq_pool.enqueue_job(
+        "send_webhook",
+        webhook_tests_db_data["espi_ebi"][0],
+        webhook_tests_db_data["endpoints"][0],
+    )
+    await worker.main()
+    event = (
+        await db_session.execute(
+            select(webhook_models.WebhookEvent)
+            .order_by(webhook_models.WebhookEvent.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one()
+    assert event.type == webhook_models.WebhookEventType.delivery_fail
+    assert event.http_code is None
+    assert (
+        event.meta is not None
+        and event.meta["exception_type"] == "ClientConnectorError"
+    )
+
+    # Valid response
+    await arq_pool.enqueue_job(
+        "send_webhook",
+        webhook_tests_db_data["espi_ebi"][0],
+        webhook_tests_db_data["endpoints"][2],
+    )
+    await worker.main()
+    event = (
+        await db_session.execute(
+            select(webhook_models.WebhookEvent)
+            .order_by(webhook_models.WebhookEvent.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one()
+    assert event.type == webhook_models.WebhookEventType.delivery_success
+    assert event.http_code == 200

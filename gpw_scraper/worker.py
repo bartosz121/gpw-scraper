@@ -1,9 +1,10 @@
 import asyncio
+import base64
 from datetime import datetime
 
 import aiohttp
 import redis.asyncio as redis
-from arq import cron
+from arq import create_pool, cron
 from arq.cron import CronJob
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -11,9 +12,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from gpw_scraper.config import settings
 from gpw_scraper.databases.db import sessionmaker
 from gpw_scraper.llm import LLMClientManaged, ModelManager
+from gpw_scraper.models.espi_ebi import EspiEbi
+from gpw_scraper.models.webhook import WebhookEndpoint, WebhookEvent, WebhookEventType
+from gpw_scraper.schemas.espi_ebi import EspiEbiItem
 from gpw_scraper.scrapers.pap import EspiEbiPapScraper, PapHrefItem
 from gpw_scraper.services.espi_ebi import SQLAEspiEbiService
 from gpw_scraper.services.sqlalchemy import ConflictError
+from gpw_scraper.services.webhook import (
+    SQLAWebhookEndpointService,
+    SQLAWebhookEventService,
+)
 
 
 async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
@@ -86,6 +94,91 @@ async def cron_scrape_pap_espi_ebi(ctx):
     await scrape_pap_espi_ebi(ctx, datetime.now(), datetime.now())
 
 
+async def dispatch_send_webhook_tasks(ctx, espi_ebi_entry_id: int):
+    pool = await create_pool(settings.ARQ_REDIS_SETTINGS)
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+
+    async with db_sessionmaker() as session:
+        espi_ebi_service = SQLAEspiEbiService(session)
+        endpoint_service = SQLAWebhookEndpointService(session)
+
+        espi_ebi = await espi_ebi_service.get(id=espi_ebi_entry_id)
+        endpoints = await endpoint_service.list_()
+        logger.info(f"Queuing {len(endpoints)} webhook messages to be sent")
+        for endpoint in endpoints:
+            logger.error(settings.ENVIRONMENT.is_qa)
+            await pool.enqueue_job(
+                "send_webhook",
+                espi_ebi,
+                endpoint,
+                dry_run=settings.ENVIRONMENT.is_qa,
+                _expires=600,
+            )
+
+
+async def send_webhook(
+    ctx, espi_ebi: EspiEbi, endpoint: WebhookEndpoint, *, dry_run: bool = False
+):
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+    async with db_sessionmaker() as session:
+        event_service = SQLAWebhookEventService(session)
+        payload = EspiEbiItem.model_validate(espi_ebi).model_dump_json()
+        event = WebhookEvent(webhook_id=endpoint.id, espi_ebi_id=espi_ebi.id)
+
+        async with aiohttp.ClientSession() as client:
+            try:
+                if dry_run:
+                    logger.info(
+                        f"Would have sent espi ebi #{espi_ebi.id} payload to {endpoint.url!s}"
+                    )
+                    event.meta = {"dry_run": True}
+                    response_status = 200
+                else:
+                    b64_secret = base64.b64encode(
+                        endpoint.secret.encode("utf-8")
+                    ).decode("utf-8")
+                    response = await client.post(
+                        endpoint.url,
+                        json=payload,
+                        headers={
+                            "user-agent": "gpw-scraper webhook",
+                            "x-webhook-secret": b64_secret,
+                        },
+                        timeout=aiohttp.ClientTimeout(60),
+                        raise_for_status=True,
+                    )
+                    response_status = response.status
+            except aiohttp.ClientResponseError as exc:
+                event.http_code = exc.status
+                logger.error(f"Response error: {exc!s}")
+                event.type = WebhookEventType.delivery_fail_response
+                event.meta = {
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                }
+            except aiohttp.ClientError as exc:
+                logger.error(f"Connection error: {exc!s}")
+                event.type = WebhookEventType.delivery_fail
+                event.meta = {
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                }
+            except Exception as exc:
+                logger.error(f"Exception: {exc!s}")
+                event.type = WebhookEventType.delivery_fail
+                event.meta = {
+                    "exception_type": type(exc).__name__,
+                    "exception": str(exc),
+                }
+            else:
+                logger.info("Response status ok")
+                event.http_code = response_status
+                event.type = WebhookEventType.delivery_success
+            finally:
+                logger.debug(f"Saving webhook event {event!r}")
+                await event_service.create(event, auto_commit=True)
+
+
 async def startup(ctx):
     ctx["redis_client"] = redis.Redis(
         host=settings.REDIS_HOST,
@@ -127,18 +220,18 @@ async def startup(ctx):
 async def shutdown(ctx):
     await ctx["redis_client"].aclose()
     await ctx["pap_session"].close()
-    await ctx["pap_session"].close()
     await ctx["openrouter_session"].close()
     await ctx["cloudflare_ai_session"].close()
     await ctx["openai_session"].close()
-    await ctx["db_sessionmaker"].close()
 
 
 class WorkerSettings:
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = settings.ARQ_REDIS_SETTINGS
-    functions = [scrape_pap_espi_ebi]
+    max_tries = 3
+    retry_jobs = True
+    functions = [scrape_pap_espi_ebi, dispatch_send_webhook_tasks, send_webhook]
     cron_jobs: list[CronJob] | None = (
         None
         if settings.ENVIRONMENT.is_qa

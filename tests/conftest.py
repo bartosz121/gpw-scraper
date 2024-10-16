@@ -1,12 +1,15 @@
 import os
+from typing import Any, AsyncGenerator
 
 import aiohttp
+import httpx
 import pytest
 from aiohttp import web
 from arq import create_pool
 from redis.asyncio import Redis
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from gpw_scraper.api import create_app
 from gpw_scraper.config import settings
 from gpw_scraper.models.base import BaseModel
 
@@ -29,19 +32,26 @@ async def redis_conn():
     await redis.aclose()
 
 
-@pytest.fixture
-async def db_sessionmaker():
+@pytest.fixture(scope="function")
+async def db_sessionmaker() -> AsyncGenerator[async_sessionmaker[AsyncSession], Any]:
     engine = create_async_engine(settings.DB_URL)
 
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.drop_all)
         await conn.run_sync(BaseModel.metadata.create_all)
 
-    sessionmaker = async_sessionmaker(engine)
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
     yield sessionmaker
 
     await engine.dispose()
+
+
+@pytest.fixture(scope="function")
+async def db_session(db_sessionmaker):
+    session: AsyncSession = db_sessionmaker()
+    yield session
+    await session.aclose()
 
 
 @pytest.fixture
@@ -124,3 +134,12 @@ async def open_router_client():
         headers={"Authorization": f"Bearer {settings.OPENROUTER_API_KEY}"},
     ) as session:
         yield session
+
+
+@pytest.fixture
+async def api_client():
+    app = create_app()
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        yield client
