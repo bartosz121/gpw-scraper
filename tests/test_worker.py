@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 from typing import TypedDict
 from unittest.mock import AsyncMock, patch
@@ -195,6 +196,8 @@ async def test_dispatch_webhook_tasks(
 @pytest.fixture
 async def webhook_api():
     async def response_200(request: web.Request) -> web.Response:
+        webhook_secret_header = request.headers["x-webhook-secret"]
+        assert base64.b64decode(webhook_secret_header).decode("utf-8") == "secret"
         return web.Response(body="ok", status=200)
 
     async def response_400(request: web.Request) -> web.Response:
