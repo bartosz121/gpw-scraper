@@ -1,6 +1,8 @@
-from gpw_scraper.config import settings
 from sqlalchemy import MetaData, create_engine
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+from gpw_scraper.config import settings
 
 metadata_ = MetaData(
     naming_convention={
@@ -18,7 +20,7 @@ engine = create_engine(settings.DB_URL, echo=settings.ENVIRONMENT.is_qa)
 session_factory = sessionmaker(engine)
 
 
-class BaseModel(DeclarativeBase):
+class BaseModel(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
     _eq_attr_name: str = "id"
