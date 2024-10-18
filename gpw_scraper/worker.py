@@ -122,7 +122,7 @@ async def send_webhook(
     db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
     async with db_sessionmaker() as session:
         event_service = SQLAWebhookEventService(session)
-        payload = EspiEbiItem.model_validate(espi_ebi).model_dump_json()
+        payload = EspiEbiItem.model_validate(espi_ebi).model_dump_json(by_alias=True)
         event = WebhookEvent(webhook_id=endpoint.id, espi_ebi_id=espi_ebi.id)
 
         async with aiohttp.ClientSession() as client:
