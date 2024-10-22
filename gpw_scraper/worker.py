@@ -25,6 +25,7 @@ from gpw_scraper.services.webhook import (
 
 
 async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
+    pool = await create_pool(settings.ARQ_REDIS_SETTINGS)
     scraper = EspiEbiPapScraper()
     redis_client: redis.Redis = ctx["redis_client"]
     pap_session: aiohttp.ClientSession = ctx["pap_session"]
@@ -86,6 +87,8 @@ async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
             await espi_ebi_service.create(item, auto_commit=True)
         except ConflictError as exc:
             logger.error(str(exc))
+        else:
+            await pool.enqueue_job("dispatch_send_webhook_tasks", item.id)
 
         await espi_ebi_service.session.close()
 
