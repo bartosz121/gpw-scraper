@@ -142,6 +142,7 @@ async def send_webhook(
                     b64_secret = base64.b64encode(
                         endpoint.secret.encode("utf-8")
                     ).decode("utf-8")
+                    # TODO: .post should be used as context manager
                     response = await client.post(
                         endpoint.url,
                         json=payload,
@@ -150,8 +151,10 @@ async def send_webhook(
                             "x-webhook-secret": b64_secret,
                         },
                         timeout=aiohttp.ClientTimeout(60),
-                        raise_for_status=True,
                     )
+                    response_text = await response.text()
+                    response_status = response.status
+                    response.raise_for_status()
                     response_status = response.status
             except aiohttp.ClientResponseError as exc:
                 event.http_code = exc.status
@@ -159,6 +162,7 @@ async def send_webhook(
                 event.type = WebhookEventType.delivery_fail_response
                 event.meta = {
                     "exception_type": type(exc).__name__,
+                    "response_text": response_text,  # type: ignore /mute unbound error because of aiohttp weirdness if not used as context manager
                     "exception": str(exc),
                 }
             except aiohttp.ClientError as exc:
