@@ -63,4 +63,4 @@ class BeautifulSoup(BeautifulSoupBase):
         if next_tr_with_content is None:
             return None
 
-        return next_tr_with_content.text
+        return next_tr_with_content.text.strip() or None
