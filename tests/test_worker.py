@@ -212,13 +212,32 @@ async def webhook_api():
         body = await request.json()
         assert body == expected_webhook_body
 
+        if body["description"] == "FORCE_400":
+            nonlocal force_fail_counter
+            force_fail_counter += 1
+
+            if force_fail_counter < 1:
+                return web.HTTPBadRequest()
+
         return web.Response(body="ok", status=200)
+
+    force_fail_counter = 0
+
+    async def response_200_fail_first_time(request: web.Request) -> web.Response:
+        nonlocal force_fail_counter
+
+        if force_fail_counter < 1:
+            force_fail_counter += 1
+            return web.HTTPBadRequest()
+
+        return await response_200(request)
 
     async def response_400(request: web.Request) -> web.Response:
         raise web.HTTPBadRequest()
 
     app = web.Application()
     app.router.add_post("/200", response_200)
+    app.router.add_post("/200-fail-first-time", response_200_fail_first_time)
     app.router.add_post("/400", response_400)
 
     from aiohttp.test_utils import TestClient, TestServer
@@ -327,3 +346,60 @@ async def test_send_webhook(
     ).scalar_one()
     assert event.type == webhook_models.WebhookEventType.delivery_success
     assert event.http_code == 200
+
+
+async def test_send_webhook_retry_on_exception(
+    webhook_api,
+    webhook_tests_db_data,
+    db_sessionmaker,
+    db_session: AsyncSession,
+    arq_pool: ArqRedis,
+):
+    async def startup(ctx):
+        ctx["db_sessionmaker"] = db_sessionmaker
+
+    endpoint = webhook_models.WebhookEndpoint(
+        url="http://127.0.0.1:6666/200-fail-first-time",
+        secret="secret",
+        user_id=webhook_tests_db_data["users"][1].id,
+    )
+    db_session.add(endpoint)
+
+    await db_session.commit()
+
+    worker = Worker(
+        on_startup=startup,
+        functions=[send_webhook],
+        burst=True,
+        poll_delay=0,
+        queue_read_limit=10,
+        redis_settings=settings.ARQ_REDIS_SETTINGS,
+    )
+
+    await arq_pool.enqueue_job(
+        "send_webhook",
+        webhook_tests_db_data["espi_ebi"][0],
+        endpoint,
+    )
+    await worker.main()
+    events = (
+        (
+            await db_session.execute(
+                select(webhook_models.WebhookEvent)
+                .where(
+                    webhook_models.WebhookEvent.espi_ebi_id
+                    == webhook_tests_db_data["espi_ebi"][0].id
+                )
+                .order_by(webhook_models.WebhookEvent.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    assert events[0].type == webhook_models.WebhookEventType.delivery_fail_response
+    assert events[0].http_code == 400
+    assert events[0].meta is not None
+
+    assert events[1].type == webhook_models.WebhookEventType.delivery_success
+    assert events[1].http_code == 200

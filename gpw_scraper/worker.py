@@ -4,7 +4,7 @@ from datetime import datetime
 
 import aiohttp
 import redis.asyncio as redis
-from arq import create_pool, cron
+from arq import Retry, create_pool, cron
 from arq.cron import CronJob
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -111,11 +111,7 @@ async def dispatch_send_webhook_tasks(ctx, espi_ebi_entry_id: int):
         for endpoint in endpoints:
             logger.error(settings.ENVIRONMENT.is_qa)
             await pool.enqueue_job(
-                "send_webhook",
-                espi_ebi,
-                endpoint,
-                dry_run=settings.ENVIRONMENT.is_qa,
-                _expires=600,
+                "send_webhook", espi_ebi, endpoint, dry_run=settings.ENVIRONMENT.is_qa
             )
 
 
@@ -129,6 +125,7 @@ async def send_webhook(
             mode="json", by_alias=True
         )
         event = WebhookEvent(webhook_id=endpoint.id, espi_ebi_id=espi_ebi.id)
+        retry_job = False
 
         async with aiohttp.ClientSession() as client:
             try:
@@ -157,15 +154,17 @@ async def send_webhook(
                     response.raise_for_status()
                     response_status = response.status
             except aiohttp.ClientResponseError as exc:
+                retry_job = True
                 event.http_code = exc.status
                 logger.error(f"Response error: {exc!s}")
                 event.type = WebhookEventType.delivery_fail_response
                 event.meta = {
                     "exception_type": type(exc).__name__,
-                    "response_text": response_text,  # type: ignore /mute unbound error because of aiohttp weirdness if not used as context manager
+                    "response_text": response_text,  # type: ignore mute unbound error because of aiohttp weirdness if not used as context manager
                     "exception": str(exc),
                 }
             except aiohttp.ClientError as exc:
+                retry_job = True
                 logger.error(f"Connection error: {exc!s}")
                 event.type = WebhookEventType.delivery_fail
                 event.meta = {
@@ -173,6 +172,7 @@ async def send_webhook(
                     "exception": str(exc),
                 }
             except Exception as exc:
+                retry_job = True
                 logger.error(f"Exception: {exc!s}")
                 event.type = WebhookEventType.delivery_fail
                 event.meta = {
@@ -186,6 +186,10 @@ async def send_webhook(
             finally:
                 logger.debug(f"Saving webhook event {event!r}")
                 await event_service.create(event, auto_commit=True)
+
+                if retry_job:
+                    logger.info(f"Retrying job for #{espi_ebi.id}")
+                    raise Retry(defer=ctx["job_try"] * 5)
 
 
 async def startup(ctx):
