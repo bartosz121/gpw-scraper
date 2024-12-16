@@ -195,7 +195,16 @@ async def test_dispatch_webhook_tasks(
 
 @pytest.fixture
 async def webhook_api():
-    expected_webhook_body = '{"id":1,"type":"espi","title":"title","description":"description","company":"company","source":"source","parsedByLlm":null,"date":"2024-01-01T00:00:00"}'
+    expected_webhook_body = {
+        "id": 1,
+        "type": "espi",
+        "title": "title",
+        "description": "description",
+        "company": "company",
+        "source": "source",
+        "parsedByLlm": None,
+        "date": "2024-01-01T00:00:00",
+    }
 
     async def response_200(request: web.Request) -> web.Response:
         webhook_secret_header = request.headers["x-webhook-secret"]
