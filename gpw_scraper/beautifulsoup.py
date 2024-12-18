@@ -69,7 +69,7 @@ class BeautifulSoup(BeautifulSoupBase):
 
         return next_tr_with_content.text.strip() or None
 
-    def yf_get_currency(self) -> str | None:
+    def yf_historical_data_get_currency(self) -> str | None:
         tag = self.find(class_="currency")
         if tag is None:
             return None
@@ -77,3 +77,58 @@ class BeautifulSoup(BeautifulSoupBase):
 
         m = re.search(utils.ISO_4217, text)
         return None if m is None else m.group()
+
+    def yf_profile_get_company_name(self) -> str | None:
+        profile_header = self.find(attrs={"data-testid": "quote-hdr"})
+        if profile_header is None:
+            return None
+
+        h1 = profile_header.find("h1")
+        if h1 is None or isinstance(h1, int):
+            return None
+
+        name_with_ticker_at_the_end = h1.get_text(strip=True)
+        name = re.sub(r"\s\(.*\)$", "", name_with_ticker_at_the_end)
+        return name
+
+    def yf_profile_get_description(self, cleanup: bool = False) -> str | None:
+        description_el = self.find(attrs={"data-testid": "description"})
+        if description_el is None:
+            return None
+
+        p = description_el.find("p")
+        if p is None or isinstance(p, int):
+            return None
+
+        content = p.get_text(strip=True)
+        if cleanup:
+            content = utils.normalize_raw_text(content)
+
+        return content
+
+    def yf_profile_get_currency(self) -> str | None:
+        exchange_el = self.find(class_="exchange")
+        if exchange_el is None:
+            return None
+        content = exchange_el.get_text(strip=True)
+
+        m = re.search(utils.ISO_4217, content)
+        return m.group() if m else None
+
+    def yf_profile_get_sector(self) -> str | None:
+        company_stats = self.find(class_="company-stats")
+        if company_stats is None:
+            return None
+        content = company_stats.get_text()
+
+        m = re.search(r"Sector:\s*(.*?)\s*Industry", content)
+        return m.group(1) if m else None
+
+    def yf_profile_get_industry(self) -> str | None:
+        company_stats = self.find(class_="company-stats")
+        if company_stats is None:
+            return None
+        content = company_stats.get_text()
+
+        m = re.search(r"Industry:\s*(.*?)\s*Full Time Employees", content)
+        return m.group(1) if m else None

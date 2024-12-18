@@ -13,13 +13,7 @@ HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yf_html")
 
 
 @pytest.fixture(scope="function")
-async def yf_stocks_scraper(web_yahoo_finance) -> YahooFinanceStocksScraper:
-    yf = YahooFinanceStocksScraper(web_yahoo_finance)
-    return yf
-
-
-@pytest.fixture(scope="function")
-async def web_yahoo_finance(aiohttp_client):
+async def web_yahoo_finance_quote_history(aiohttp_client):
     async def quote_history(request: web.Request):
         quote = request.match_info.get("quote")
         if quote is None:
@@ -38,6 +32,14 @@ async def web_yahoo_finance(aiohttp_client):
     client = await aiohttp_client(app)
     setattr(client, "_base_url", "")
     yield client
+
+
+@pytest.fixture(scope="function")
+async def yf_stocks_scraper(
+    web_yahoo_finance_quote_history,
+) -> YahooFinanceStocksScraper:
+    yf = YahooFinanceStocksScraper(web_yahoo_finance_quote_history)
+    return yf
 
 
 async def test_get_historical_stocks_data(yf_stocks_scraper: YahooFinanceStocksScraper):

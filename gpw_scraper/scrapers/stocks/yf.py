@@ -79,7 +79,7 @@ class YahooFinanceStocksScraper:
 
         soup = BeautifulSoup(body, features="html.parser")
         currency = (
-            soup.yf_get_currency() or "USD"
+            soup.yf_historical_data_get_currency() or "USD"
         )  # FIXME: USD as default, trashy but need it for now
         logger.debug(f"{quote!s} ohlc currency: {currency!s}")
 
