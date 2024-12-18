@@ -1,6 +1,10 @@
+import re
+
 from bs4 import BeautifulSoup as BeautifulSoupBase
 from bs4 import NavigableString, Tag
 from loguru import logger
+
+from gpw_scraper import utils
 
 
 class BeautifulSoup(BeautifulSoupBase):
@@ -64,3 +68,12 @@ class BeautifulSoup(BeautifulSoupBase):
             return None
 
         return next_tr_with_content.text.strip() or None
+
+    def yf_get_currency(self) -> str | None:
+        tag = self.find(class_="currency")
+        if tag is None:
+            return None
+        text = tag.get_text(strip=True)
+
+        m = re.search(utils.ISO_4217, text)
+        return None if m is None else m.group()
