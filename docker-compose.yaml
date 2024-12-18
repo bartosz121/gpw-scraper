@@ -14,6 +14,7 @@ x-gpw-scraper-environment: &gpw-scraper-environment
     - CLOUDFLARE_AI_API_KEY=
     - CLOUDFLARE_AI_ACCOUNT_ID=
     - OPENAI_API_KEY=
+    - EXCHANGERATE_API_KEY=
 
 services:
   api:

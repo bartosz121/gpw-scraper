@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from gpw_scraper.config import settings
 from gpw_scraper.models.base import BaseModel
+from gpw_scraper.models.currency_exchange import CurrencyExchange  # noqa: F401
 from gpw_scraper.models.espi_ebi import EspiEbi  # noqa: F401
 from gpw_scraper.models.stocks_ohlc import StockOHLC  # noqa: F401
 from gpw_scraper.models.webhook import (  # noqa: F401

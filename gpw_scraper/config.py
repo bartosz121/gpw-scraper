@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: Environment = Environment.LOCAL
     LOG_LEVEL: str = "DEBUG"
 
+    EXCHANGERATE_API_KEY: str
     OPENROUTER_BASE_URL: str = "https://openrouter.ai"
     OPENROUTER_URL_PATH: str = "/api/v1/chat/completions"
     OPENROUTER_API_KEY: str
