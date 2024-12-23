@@ -12,10 +12,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from gpw_scraper.config import settings
 from gpw_scraper.databases.db import sessionmaker
 from gpw_scraper.llm import LLMClientManaged, ModelManager
+from gpw_scraper.models.currency_exchange import CurrencyExchange
 from gpw_scraper.models.espi_ebi import EspiEbi
+from gpw_scraper.models.stocks_ohlc import StockOHLC
 from gpw_scraper.models.webhook import WebhookEndpoint, WebhookEvent, WebhookEventType
 from gpw_scraper.schemas.espi_ebi import EspiEbiItem
+from gpw_scraper.scrapers.currency_exchange import exchangerate_api
 from gpw_scraper.scrapers.pap import EspiEbiPapScraper, PapHrefItem
+from gpw_scraper.scrapers.stocks.yf import YahooFinanceStocksScraper
+from gpw_scraper.scrapers.tickers_metadata.yf import YahooFinanceTickersMetadataScraper
 from gpw_scraper.services.espi_ebi import SQLAEspiEbiService
 from gpw_scraper.services.sqlalchemy import ConflictError
 from gpw_scraper.services.webhook import (
@@ -192,6 +197,97 @@ async def send_webhook(
                     raise Retry(defer=ctx["job_try"] * 5)
 
 
+# TODO: move below to elixir vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+
+async def get_currency_exchange(ctx):
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+    api = exchangerate_api.ExchangeRateApi()
+    logger.info("Fetching exchange rates")
+    rates = await api.get_latest_exchange_rate(
+        settings.EXCHANGERATE_API_KEY, base_code="PLN"
+    )
+
+    items = [
+        CurrencyExchange(currency=k, exchange_rate=v)
+        for k, v in rates.items()
+        if k in ("USD", "EUR")
+    ]
+    session = db_sessionmaker()
+    session.add_all(items)
+    await session.commit()
+    logger.info("Exchange rates saved")
+
+
+async def yf_get_ticker_metadata(ctx, ticker: str):
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+    scraper = YahooFinanceTickersMetadataScraper.with_default_session()
+    logger.info(f"Scraping metadata for ticker {ticker!s} from yf")
+
+    metadata = await scraper.get_ticker_metadata(ticker)
+    session = db_sessionmaker()
+    session.add(metadata)
+    await session.commit()
+
+    logger.info(f"Metadata for ticker {ticker!s} scraped from yf")
+
+
+async def yf_scrape_ohlc_for_ticker(ctx, ticker: str, date: datetime):
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+    logger.info(f"Scraping OHLC for {ticker!s} at {date}")
+    scraper = YahooFinanceStocksScraper.with_default_session()
+    data = await scraper.get_ticker_ohlc_for_date(
+        ticker, date, raise_if_not_exact_date=True
+    )
+
+    session = db_sessionmaker()
+    session.add(data)
+    await session.commit()
+
+    logger.info(f"Scraped OHLC for {ticker!s} at {date}")
+
+
+async def yf_scrape_ohlc_for_tickers_with_metadata_for_today(ctx):
+    import random
+
+    from sqlalchemy import select
+
+    from gpw_scraper.models.tickers_metadata import TickerMetadata
+
+    pool = await create_pool(settings.ARQ_REDIS_SETTINGS)
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+    session = db_sessionmaker()
+
+    tickers = (await session.scalars(select(TickerMetadata.ticker))).all()
+
+    async def coro_with_random_sleep(ticker: str):
+        sleep_s = random.randint(1, 120)
+        logger.info(f"Scraping for {ticker!s} OHLC will start in {sleep_s} seconds")
+        await asyncio.sleep(random.randint(1, 120))
+        await pool.enqueue_job("yf_scrape_ohlc_for_ticker", ticker, datetime.now())
+
+    tasks = [coro_with_random_sleep(ticker) for ticker in tickers]
+    logger.info(f"Scheduling OHLC data scrape for {tickers}")
+    await asyncio.gather(*tasks)
+    logger.info(f"OHLC data scraped for {tickers}")
+
+
+async def yf_scrape_historical_ohlc_for_ticker(ctx, ticker: str):
+    db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
+    scraper = YahooFinanceStocksScraper.with_default_session()
+
+    logger.info(f"Scraping historical OHLC data for {ticker!s}")
+    data = await scraper.get_historical_stocks_data(ticker)
+
+    session = db_sessionmaker()
+    session.add_all(data)
+    await session.commit()
+    logger.info(f"Historical OHLC data for {ticker!s} scraped")
+
+
+# TODO: move above to elixir ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 async def startup(ctx):
     ctx["redis_client"] = redis.Redis(
         host=settings.REDIS_HOST,
@@ -244,7 +340,16 @@ class WorkerSettings:
     redis_settings = settings.ARQ_REDIS_SETTINGS
     max_tries = 3
     retry_jobs = True
-    functions = [scrape_pap_espi_ebi, dispatch_send_webhook_tasks, send_webhook]
+    functions = [
+        scrape_pap_espi_ebi,
+        dispatch_send_webhook_tasks,
+        send_webhook,
+        get_currency_exchange,
+        yf_get_ticker_metadata,
+        yf_scrape_ohlc_for_ticker,
+        yf_scrape_ohlc_for_tickers_with_metadata_for_today,
+        yf_scrape_historical_ohlc_for_ticker,
+    ]
     cron_jobs: list[CronJob] | None = (
         None
         if settings.ENVIRONMENT.is_qa
@@ -254,6 +359,18 @@ class WorkerSettings:
                 minute=set(range(0, 60, 5)),  # every 5 min
                 max_tries=1,
                 timeout=500,
+            ),
+            cron(
+                get_currency_exchange,
+                hour=12,
+                max_tries=3,
+                timeout=500,
+            ),
+            cron(
+                yf_scrape_ohlc_for_tickers_with_metadata_for_today,
+                hour=9,
+                weekday={0, 1, 2, 3, 4, 5},
+                max_tries=3,
             ),
         ]
     )
