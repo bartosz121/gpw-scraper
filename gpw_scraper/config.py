@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     OPENROUTER_URL_PATH: str = "/api/v1/chat/completions"
     OPENROUTER_API_KEY: str
     OPENROUTER_MODEL_LIST: list[str] = [
+        "google/gemini-2.0-flash-lite-001",
+        "meta-llama/llama-4-maverick:free",
         "meta-llama/llama-3.1-8b-instruct:free",
         "meta-llama/llama-3-8b-instruct:free",
         "nousresearch/hermes-3-llama-3.1-405b:free",
