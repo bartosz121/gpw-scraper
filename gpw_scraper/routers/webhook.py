@@ -51,9 +51,7 @@ async def create_webhook_endpoint(
     user: WebhookUser,
     webhook_endpoint_service: WebhookEndpointService,
 ):
-    url_already_exists_for_user = await webhook_endpoint_service.exists(
-        user_id=user.id, url=data.url.unicode_string()
-    )
+    url_already_exists_for_user = await webhook_endpoint_service.exists(user_id=user.id, url=data.url.unicode_string())
     if url_already_exists_for_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -61,9 +59,7 @@ async def create_webhook_endpoint(
         )
 
     secret = secrets.token_urlsafe(32)
-    webhook_endpoint = webhook_models.WebhookEndpoint(
-        user_id=user.id, url=data.url.unicode_string(), secret=secret
-    )
+    webhook_endpoint = webhook_models.WebhookEndpoint(user_id=user.id, url=data.url.unicode_string(), secret=secret)
     created = await webhook_endpoint_service.create(webhook_endpoint)
 
     return {"id": created.id, "url": created.url, "secret": secret}

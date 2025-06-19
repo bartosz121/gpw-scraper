@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("/espi-espi", response_model=PaginatedResponse[EspiEbiItem])
 async def get_espi_ebi(
     espi_ebi_service: deps.EspiEbiService,
-    pagination: PaginationParams = Depends(),
+    pagination: Annotated[PaginationParams, Depends()],
     espi_or_ebi: Annotated[EntryType | None, Query(alias="filter")] = None,
 ):
     stmt = select(EspiEbi)

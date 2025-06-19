@@ -1,12 +1,10 @@
 from bs4 import BeautifulSoup as BeautifulSoupBase
-from bs4 import NavigableString, Tag
+from bs4 import NavigableString, Tag  # pyright: ignore[reportPrivateImportUsage]
 from loguru import logger
 
 
 class BeautifulSoup(BeautifulSoupBase):
-    def pap_get_text_after_semicolon(
-        self, tag: Tag | NavigableString | None
-    ) -> str | None:
+    def pap_get_text_after_semicolon(self, tag: Tag | NavigableString | None) -> str | None:  # noqa: PLR6301
         if tag is None:
             return None
 
@@ -16,7 +14,7 @@ class BeautifulSoup(BeautifulSoupBase):
 
         return tag_parent.text.strip("Firma:").strip()
 
-    def pap_get_text_from_tr(self, tag: Tag | NavigableString | None) -> str | None:
+    def pap_get_text_from_tr(self, tag: Tag | NavigableString | None) -> str | None:  # noqa: PLR6301
         logger.debug(tag)
         if tag is None:
             return None
@@ -28,7 +26,7 @@ class BeautifulSoup(BeautifulSoupBase):
 
         tds = tag_parent.find_all("td")
         logger.debug(tds)
-        if len(tds) < 2:
+        if len(tds) < 2:  # noqa: PLR2004
             return None
 
         target_text = tds[1].text.strip()
@@ -48,10 +46,7 @@ class BeautifulSoup(BeautifulSoupBase):
             return tag.name == "tr" and tag.find(string="Treść raportu:") is not None
 
         def string_en(tag):
-            return (
-                tag.name == "tr"
-                and tag.find(string="Contents of the report:") is not None
-            )
+            return tag.name == "tr" and tag.find(string="Contents of the report:") is not None
 
         tr_with_heading = self.find(string_pl)
         if tr_with_heading is None:

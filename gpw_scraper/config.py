@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     ENVIRONMENT: Environment = Environment.LOCAL
+    SEND_WEBHOOK_TASKS_ENABLED: bool = True
     LOG_LEVEL: str = "DEBUG"
 
     OPENROUTER_BASE_URL: str = "https://openrouter.ai"
@@ -70,7 +71,7 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def CLOUDFLARE_AI_URL_PATH(self) -> str:
+    def CLOUDFLARE_AI_URL_PATH(self) -> str:  # noqa: N802
         return f"/client/v4/accounts/{self.CLOUDFLARE_AI_ACCOUNT_ID}/ai/v1/chat/completions"
 
     CLOUDFLARE_AI_API_KEY: str
@@ -109,13 +110,11 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def DB_URL(self) -> str:
+    def DB_URL(self) -> str:  # noqa: N802
         return MultiHostUrl.build(
             scheme=self.DB_SCHEME,
             username=self.DB_USER,
-            password=self.DB_PASSWORD.get_secret_value()
-            if isinstance(self.DB_PASSWORD, SecretStr)
-            else None,
+            password=self.DB_PASSWORD.get_secret_value() if isinstance(self.DB_PASSWORD, SecretStr) else None,
             host=self.DB_HOST,
             port=self.DB_PORT,
             path=self.DB_DATABASE,
@@ -123,7 +122,7 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def ARQ_REDIS_SETTINGS(self) -> RedisSettings:
+    def ARQ_REDIS_SETTINGS(self) -> RedisSettings:  # noqa: N802
         return RedisSettings(
             self.REDIS_HOST,
             self.REDIS_PORT,

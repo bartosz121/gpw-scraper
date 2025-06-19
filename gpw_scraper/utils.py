@@ -1,11 +1,10 @@
 import re
+from collections.abc import Generator
 from datetime import datetime, timedelta
-from typing import Generator
-
 from zoneinfo import ZoneInfo
 
 
-def date_range(start: datetime, end: datetime) -> Generator[datetime, None, None]:
+def date_range(start: datetime, end: datetime) -> Generator[datetime]:
     return (start + timedelta(days=x) for x in range((end - start).days + 1))
 
 

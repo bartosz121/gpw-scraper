@@ -1,11 +1,12 @@
 import asyncio
 import itertools
 import re
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import (
+    ClassVar,
     Literal,
     NamedTuple,
-    Sequence,
     cast,
 )
 
@@ -36,9 +37,9 @@ class EspiEbiPapScraper:
     url = "https://espiebi-pap-pl.translate.goog"
     db_source_base_url = "https://espiebi.pap.pl"
     node_pattern = r"(/node/\d+)\?"
-    google_translate_params = {"_x_tr_sl": "en", "_x_tr_tl": "pl", "_x_tr_hl": "en"}
+    google_translate_params: ClassVar[dict[str, str]] = {"_x_tr_sl": "en", "_x_tr_tl": "pl", "_x_tr_hl": "en"}
 
-    async def scrape_hrefs(
+    async def scrape_hrefs(  # noqa: PLR0914, PLR6301
         self,
         pap_session: aiohttp.ClientSession,
         date: datetime,
@@ -74,16 +75,14 @@ class EspiEbiPapScraper:
                 logger.info(f"h2 with {date_str} not found at {response.url!s}")
                 if page == 0:
                     if pap_being_stupid is False:
-                        logger.info(
-                            "Trying +1 day in created and end url param, maybe pap espi ebi page is stupid?"
-                        )
+                        logger.info("Trying +1 day in created and end url param, maybe pap espi ebi page is stupid?")
                         pap_being_stupid = True
                         created_param = (date + timedelta(days=1)).strftime("%Y-%m-%d")
                         end_date_param = created_param
                         continue
                     if pap_being_stupid_2 is False:
                         logger.info(
-                            "Trying real date in created and +1 day in end, maybe pap espi ebi page is stupid? (squared)"
+                            "Trying real date in created and +1 day in end, maybe pap espi ebi page is stupid?(squared)"
                         )
                         pap_being_stupid_2 = True
                         created_param = date.strftime("%Y-%m-%d")
@@ -105,15 +104,15 @@ class EspiEbiPapScraper:
 
             for item in li_elements:
                 logger.debug(f"Parsing item {item!s}")
-                hour = item.select_one(".hour").text
-                a_tag = item.select("a")[0] if len(item.select("a")) > 0 else None
+                hour = item.select_one(".hour").text  # type: ignore
+                a_tag = item.select("a")[0] if len(item.select("a")) > 0 else None  # type: ignore
                 if hour is None or a_tag is None:
                     logger.error(f"Required data not found for {item!s}")
                     continue
 
                 hour_str = hour.strip()
                 href_absolute = a_tag["href"]  # absolute because of google translate
-                m = re.search(EspiEbiPapScraper.node_pattern, href_absolute)
+                m = re.search(EspiEbiPapScraper.node_pattern, href_absolute)  # type: ignore
                 if m is None:
                     logger.error(f"Regex failed on {href_absolute}")
                     continue
@@ -141,8 +140,7 @@ class EspiEbiPapScraper:
         ignore_list: Sequence[str] = [],
     ) -> list[PapHrefItem]:
         href_tasks = [
-            self.scrape_hrefs(pap_session, date, ignore_list)
-            for date in utils.date_range(date_start, date_end)
+            self.scrape_hrefs(pap_session, date, ignore_list) for date in utils.date_range(date_start, date_end)
         ]
 
         return list(itertools.chain.from_iterable(await asyncio.gather(*href_tasks)))
@@ -154,9 +152,7 @@ class EspiEbiPapScraper:
         clients: Sequence[llm.LLMClientManaged],
     ) -> EspiEbi:
         logger.info(f"{href_item} Scraping item")
-        response = await pap_session.get(
-            href_item.href, params=EspiEbiPapScraper.google_translate_params
-        )
+        response = await pap_session.get(href_item.href, params=EspiEbiPapScraper.google_translate_params)
         response.raise_for_status()
 
         content = await response.text()
@@ -164,9 +160,7 @@ class EspiEbiPapScraper:
         soup = BeautifulSoup(content, features="html.parser")
 
         logger.debug(f"{href_item.href} Looking for item type")
-        source_sibling_div = soup.find(
-            "div", text=re.compile(r"Źródło (raportu|danych)")
-        )
+        source_sibling_div = soup.find("div", string=re.compile(r"Źródło (raportu|danych)"))
         if source_sibling_div is None:
             msg = f"Source sibling div not found in {href_item.href}"
             logger.warning(msg)
@@ -204,8 +198,11 @@ class EspiEbiPapScraper:
         )
         return item
 
-    async def _parse_espi(
-        self, url: str, soup: BeautifulSoup, clients: Sequence[llm.LLMClientManaged]
+    async def _parse_espi(  # noqa: PLR6301
+        self,
+        url: str,
+        soup: BeautifulSoup,
+        clients: Sequence[llm.LLMClientManaged],
     ) -> EspiEbiScrapedInfo:
         logger.info(f"{url} Parsing ESPI item")
         logger.debug(f"{url} Looking for item title in html")
@@ -213,13 +210,9 @@ class EspiEbiPapScraper:
         item_title_from_header = soup.pap_get_item_title_from_h1()
         logger.debug(f"{item_title_from_header=}")
 
-        item_title_from_content = soup.pap_get_text_from_tr(
-            (soup.find("td", string="Tytuł"))
-        )
+        item_title_from_content = soup.pap_get_text_from_tr(soup.find("td", string="Tytuł"))  # type: ignore
         if item_title_from_content is not None:
-            item_title_from_content = item_title_from_content.lstrip(
-                "Tytuł:"
-            ).strip()  # FIXME: yikes
+            item_title_from_content = item_title_from_content.lstrip("Tytuł:").strip()  # FIXME: yikes
         logger.debug(f"{item_title_from_content=}")
 
         logger.debug(f"{url} Looking for espi content")
@@ -227,9 +220,7 @@ class EspiEbiPapScraper:
         logger.debug(f"{item_content=}")
 
         logger.debug(f"{url} Looking for company name")
-        company_name = soup.pap_get_text_from_tr(
-            (soup.find("td", string="Nazwa emitenta"))
-        )
+        company_name = soup.pap_get_text_from_tr(soup.find("td", string="Nazwa emitenta"))  # type: ignore
         if company_name is None:
             msg = f"{url} Company name not found in {url}"
             logger.error(msg)
@@ -256,7 +247,8 @@ class EspiEbiPapScraper:
                     break
 
         if item_title is None:
-            raise ValueError(f"{url} item title is None")
+            msg = f"{url} item title is None"
+            raise ValueError(msg)
 
         item_title = utils.normalize_raw_text(item_title)
         if item_description:
@@ -271,22 +263,18 @@ class EspiEbiPapScraper:
             llm=llm_model,
         )
 
-    async def _parse_ebi(self, url: str, soup: BeautifulSoup) -> EspiEbiScrapedInfo:
+    async def _parse_ebi(self, url: str, soup: BeautifulSoup) -> EspiEbiScrapedInfo:  # noqa: PLR6301
         logger.info(f"{url} Parsing EBI item")
 
         logger.debug(f"{url} Looking for company name")
-        company_name_text = soup.pap_get_text_after_semicolon(
-            soup.find("strong", string="Firma:")
-        )
+        company_name_text = soup.pap_get_text_after_semicolon(soup.find("strong", string="Firma:"))  # type: ignore
         if company_name_text is None:
             msg = f"Company text not found in {url}"
             logger.error(msg)
             raise ValueError(msg)
 
         logger.debug(f"{url} Looking for item title in html")
-        item_title = soup.pap_get_text_after_semicolon(
-            soup.find("strong", string="Tytuł:")
-        )
+        item_title = soup.pap_get_text_after_semicolon(soup.find("strong", string="Tytuł:"))  # type: ignore
         if item_title is None:
             msg = f"Item title not found in {url}"
             logger.error(msg)
@@ -322,15 +310,12 @@ class EspiEbiPapScraper:
         logger.info("Scraping")
 
         href_tasks = [
-            self.scrape_hrefs(pap_session, date, ignore_list)
-            for date in utils.date_range(date_start, date_end)
+            self.scrape_hrefs(pap_session, date, ignore_list) for date in utils.date_range(date_start, date_end)
         ]
 
         hrefs = itertools.chain.from_iterable(await asyncio.gather(*href_tasks))
 
-        item_tasks = [
-            self.scrape_item_data(pap_session, href, clients) for href in hrefs
-        ]
+        item_tasks = [self.scrape_item_data(pap_session, href, clients) for href in hrefs]
 
         items = await asyncio.gather(*item_tasks)
         logger.debug(f"{items=!r}")

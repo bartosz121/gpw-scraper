@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Any, Generic, Iterable, Literal, NamedTuple, TypeVar
+from typing import Any, Generic, Literal, NamedTuple, TypeVar
 
 from loguru import logger
 from sqlalchemy import Column, Select, asc, desc, select, text
@@ -66,17 +67,13 @@ class SQLAlchemyService(Generic[T, U]):
         self.auto_refresh = auto_refresh
         self.auto_commit = auto_commit
 
-    def _get_statement(
-        self, statement: Select[tuple[T]] | None = None
-    ) -> Select[tuple[T]]:
+    def _get_statement(self, statement: Select[tuple[T]] | None = None) -> Select[tuple[T]]:
         return self.statement if statement is None else statement
 
     def _get_model_id_attr(self) -> Column[U]:
         return getattr(self.model, self.model_id_attr_name)
 
-    async def _attach_to_session(
-        self, model: T, strategy: Literal["add", "merge"] = "add"
-    ) -> T:
+    async def _attach_to_session(self, model: T, strategy: Literal["add", "merge"] = "add") -> T:
         if strategy == "add":
             self.session.add(model)
             return model
@@ -86,12 +83,10 @@ class SQLAlchemyService(Generic[T, U]):
         msg = f"Strategy must be 'add' or 'merge', found:{strategy!r}"
         raise SQLAlchemyServiceError(msg)
 
-    async def _flush_or_commit(self, auto_commit: bool | None) -> None:
+    async def _flush_or_commit(self, *, auto_commit: bool | None) -> None:
         auto_commit = self.auto_commit if auto_commit is None else auto_commit
 
-        return (
-            await self.session.commit() if auto_commit else await self.session.flush()
-        )
+        return await self.session.commit() if auto_commit else await self.session.flush()
 
     async def _refresh(
         self,
@@ -113,69 +108,54 @@ class SQLAlchemyService(Generic[T, U]):
             else None
         )
 
-    def _expunge(self, instance: T, auto_expunge: bool | None = None) -> None:
+    def _expunge(self, instance: T, *, auto_expunge: bool | None = None) -> None:
         auto_expunge = self.auto_expunge if auto_expunge is None else auto_expunge
 
         return self.session.expunge(instance) if auto_expunge else None
 
-    def _where_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _where_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
         for k, v in kwargs.items():
             if k not in RESERVED_KWARGS:
                 statement = statement.where(getattr(self.model, k) == v)
         return statement
 
-    def _offset_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _offset_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:  # noqa: PLR6301
         if offset := kwargs.get("offset"):
             statement = statement.offset(offset)
         return statement
 
-    def _limit_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _limit_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:  # noqa: PLR6301
         if limit := kwargs.get("limit"):
             statement = statement.limit(limit)
         return statement
 
-    def _paginate_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _paginate_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
         statement = self._offset_from_kwargs(statement, **kwargs)
         statement = self._limit_from_kwargs(statement, **kwargs)
         return statement
 
-    def _order_by_from_kwargs(
-        self, statement: Select[tuple[T]], **kwargs: Any
-    ) -> Select[tuple[T]]:
+    def _order_by_from_kwargs(self, statement: Select[tuple[T]], **kwargs: Any) -> Select[tuple[T]]:
         if order_by := kwargs.get("order_by"):
             if not isinstance(order_by, OrderByBase):
-                raise SQLAlchemyServiceError(
-                    "order_by argument is not of expected type"
-                )
+                msg = "order_by argument is not of expected type"
+                raise SQLAlchemyServiceError(msg)
 
             if order_by.order == "asc":
                 statement = statement.order_by(
                     asc(getattr(self.model, order_by.field)),
                 )
             else:
-                statement = statement.order_by(
-                    desc(getattr(self.model, order_by.field))
-                )
+                statement = statement.order_by(desc(getattr(self.model, order_by.field)))
 
         return statement
 
-    def check_not_found(self, item: T | None) -> T:
+    def check_not_found(self, item: T | None) -> T:  # noqa: PLR6301
         if item is None:
             msg = "No record found"
             raise NotFoundError(msg)
         return item
 
-    async def count(
-        self, statement: Select[tuple[T]] | None = None, **kwargs: Any
-    ) -> int:
+    async def count(self, statement: Select[tuple[T]] | None = None, **kwargs: Any) -> int:
         with sql_error_handler():
             statement = self._get_statement(statement)
             statement = self._where_from_kwargs(statement, **kwargs)
@@ -204,13 +184,13 @@ class SQLAlchemyService(Generic[T, U]):
 
     async def delete(
         self,
-        id: U,
+        id_: U,
         *,
         auto_commit: bool | None = None,
         auto_expunge: bool | None = None,
     ) -> T:
         with sql_error_handler():
-            instance = await self.get(id=id)
+            instance = await self.get(id=id_)
             await self.session.delete(instance)
             await self._flush_or_commit(auto_commit=auto_commit)
             self._expunge(instance, auto_expunge=auto_expunge)
@@ -256,6 +236,7 @@ class SQLAlchemyService(Generic[T, U]):
     async def get_one_or_none(
         self,
         statement: Select[tuple[T]] | None = None,
+        *,
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> T | None:
@@ -271,6 +252,7 @@ class SQLAlchemyService(Generic[T, U]):
     async def list_(
         self,
         statement: Select[tuple[T]] | None = None,
+        *,
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> list[T]:
@@ -289,6 +271,7 @@ class SQLAlchemyService(Generic[T, U]):
     async def list_and_count(
         self,
         statement: Select[Any] | None = None,
+        *,
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> tuple[list[T], int]:

@@ -135,23 +135,14 @@ async def webhook_tests_db_data(db_session: AsyncSession) -> WebhookDbData:
     db_session.add_all(espi_ebi)
     await db_session.flush()
 
-    users = [
-        webhook_models.WebhookUser(name=f"user{i}", api_key=f"api-key-{i}")
-        for i in range(3)
-    ]
+    users = [webhook_models.WebhookUser(name=f"user{i}", api_key=f"api-key-{i}") for i in range(3)]
     db_session.add_all(users)
     await db_session.flush()
 
     endpoints = [
-        webhook_models.WebhookEndpoint(
-            url="http://doesnt-exist", secret="secret", user_id=users[0].id
-        ),
-        webhook_models.WebhookEndpoint(
-            url="http://127.0.0.1:6666/400", secret="secret", user_id=users[0].id
-        ),
-        webhook_models.WebhookEndpoint(
-            url="http://127.0.0.1:6666/200", secret="secret", user_id=users[1].id
-        ),
+        webhook_models.WebhookEndpoint(url="http://doesnt-exist", secret="secret", user_id=users[0].id),
+        webhook_models.WebhookEndpoint(url="http://127.0.0.1:6666/400", secret="secret", user_id=users[0].id),
+        webhook_models.WebhookEndpoint(url="http://127.0.0.1:6666/200", secret="secret", user_id=users[1].id),
     ]
 
     db_session.add_all(endpoints)
@@ -161,9 +152,7 @@ async def webhook_tests_db_data(db_session: AsyncSession) -> WebhookDbData:
 
 
 @patch("gpw_scraper.worker.create_pool")
-async def test_dispatch_webhook_tasks(
-    mock_create_pool, webhook_tests_db_data, db_sessionmaker, arq_pool: ArqRedis
-):
+async def test_dispatch_webhook_tasks(mock_create_pool, webhook_tests_db_data, db_sessionmaker, arq_pool: ArqRedis):
     mock_pool = AsyncMock()
     mock_create_pool.return_value = mock_pool
 
@@ -178,17 +167,12 @@ async def test_dispatch_webhook_tasks(
         queue_read_limit=10,
         redis_settings=settings.ARQ_REDIS_SETTINGS,
     )
-    await arq_pool.enqueue_job(
-        "dispatch_send_webhook_tasks", webhook_tests_db_data["espi_ebi"][0].id
-    )
+    await arq_pool.enqueue_job("dispatch_send_webhook_tasks", webhook_tests_db_data["espi_ebi"][0].id)
     await worker.main()
 
     assert mock_pool.enqueue_job.call_count == 3
-    assert all(
-        call.args[1] == webhook_tests_db_data["espi_ebi"][0]
-        for call in mock_pool.enqueue_job.call_args_list
-    )
-    assert set(call.args[2].id for call in mock_pool.enqueue_job.call_args_list) == set(
+    assert all(call.args[1] == webhook_tests_db_data["espi_ebi"][0] for call in mock_pool.enqueue_job.call_args_list)
+    assert set(call.args[2].id for call in mock_pool.enqueue_job.call_args_list) == set(  # noqa: C401
         endpoint.id for endpoint in webhook_tests_db_data["endpoints"]
     )
 
@@ -240,7 +224,7 @@ async def webhook_api():
     app.router.add_post("/200-fail-first-time", response_200_fail_first_time)
     app.router.add_post("/400", response_400)
 
-    from aiohttp.test_utils import TestClient, TestServer
+    from aiohttp.test_utils import TestClient, TestServer  # noqa: PLC0415
 
     client = TestClient(TestServer(app, port=6666))
     await client.start_server()
@@ -280,9 +264,7 @@ async def test_send_webhook(
 
     event = (
         await db_session.execute(
-            select(webhook_models.WebhookEvent)
-            .order_by(webhook_models.WebhookEvent.created_at.desc())
-            .limit(1)
+            select(webhook_models.WebhookEvent).order_by(webhook_models.WebhookEvent.created_at.desc()).limit(1)
         )
     ).scalar_one()
     assert event.type == webhook_models.WebhookEventType.delivery_success
@@ -298,18 +280,14 @@ async def test_send_webhook(
     await worker.main()
     event = (
         await db_session.execute(
-            select(webhook_models.WebhookEvent)
-            .order_by(webhook_models.WebhookEvent.created_at.desc())
-            .limit(1)
+            select(webhook_models.WebhookEvent).order_by(webhook_models.WebhookEvent.created_at.desc()).limit(1)
         )
     ).scalar_one()
     assert event.type == webhook_models.WebhookEventType.delivery_fail_response
     assert event.http_code == 400
-    assert (
-        event.meta is not None and event.meta["exception_type"] == "ClientResponseError"
-    )
+    assert event.meta is not None and event.meta["exception_type"] == "ClientResponseError"
 
-    # aiohttp.ClientError
+    # aiohttp.ClientConnectorDNSError
     await arq_pool.enqueue_job(
         "send_webhook",
         webhook_tests_db_data["espi_ebi"][0],
@@ -318,17 +296,12 @@ async def test_send_webhook(
     await worker.main()
     event = (
         await db_session.execute(
-            select(webhook_models.WebhookEvent)
-            .order_by(webhook_models.WebhookEvent.created_at.desc())
-            .limit(1)
+            select(webhook_models.WebhookEvent).order_by(webhook_models.WebhookEvent.created_at.desc()).limit(1)
         )
     ).scalar_one()
     assert event.type == webhook_models.WebhookEventType.delivery_fail
     assert event.http_code is None
-    assert (
-        event.meta is not None
-        and event.meta["exception_type"] == "ClientConnectorError"
-    )
+    assert event.meta is not None and event.meta["exception_type"] == "ClientConnectorDNSError"
 
     # Valid response
     await arq_pool.enqueue_job(
@@ -339,9 +312,7 @@ async def test_send_webhook(
     await worker.main()
     event = (
         await db_session.execute(
-            select(webhook_models.WebhookEvent)
-            .order_by(webhook_models.WebhookEvent.created_at.desc())
-            .limit(1)
+            select(webhook_models.WebhookEvent).order_by(webhook_models.WebhookEvent.created_at.desc()).limit(1)
         )
     ).scalar_one()
     assert event.type == webhook_models.WebhookEventType.delivery_success
@@ -386,10 +357,7 @@ async def test_send_webhook_retry_on_exception(
         (
             await db_session.execute(
                 select(webhook_models.WebhookEvent)
-                .where(
-                    webhook_models.WebhookEvent.espi_ebi_id
-                    == webhook_tests_db_data["espi_ebi"][0].id
-                )
+                .where(webhook_models.WebhookEvent.espi_ebi_id == webhook_tests_db_data["espi_ebi"][0].id)
                 .order_by(webhook_models.WebhookEvent.created_at.asc())
             )
         )

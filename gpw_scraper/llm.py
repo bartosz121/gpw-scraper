@@ -2,7 +2,7 @@ import asyncio
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TypedDict, assert_never
 
 import aiohttp
@@ -15,14 +15,14 @@ ESPI_DESCRIPTION = """ESPI, or the Electronic Information Transmission System, i
  to disclose important regulatory information to the market. It is similar to the SEC's EDGAR system in the United States.
  Companies use ESPI to submit financial reports, corporate governance updates, material events,
  and other legally required documents to the Warsaw Stock Exchange and make them accessible to investors and the public.
-"""
+"""  # noqa: E501
 
 SYSTEM_PROMPT = f"""You are an AI assistant specialized in extracting and summarizing information from ESPI report HTML pages.
 {ESPI_DESCRIPTION}.
 Your task is to analyze HTML content, extract relevant information, and format it according to a specific JSON schema.
 Focus on identifying the report's title and summarizing its content while adhering to given guidelines.
 Do not include information about HTML structure, ESPI, or PAP in your summary, and exclude company-specific details like address, NIP, or REGON from the description.
-"""
+"""  # noqa: E501
 
 TASK_PROMPT = """Extract and summarize information from the following ESPI report HTML page. Follow these steps:
 
@@ -53,7 +53,7 @@ Now, analyze the following HTML content and provide the extracted information in
 ```
 
 Title and description must be in polish, create it in polish in the first place or translate it.
-"""
+"""  # noqa: E501
 
 
 @dataclass
@@ -62,7 +62,7 @@ class ModelFailure:
     last_report: datetime | None = None
 
     def last_report_delta(self) -> timedelta | None:
-        return None if self.last_report is None else datetime.now() - self.last_report
+        return None if self.last_report is None else datetime.now(tz=UTC) - self.last_report
 
     def reset(self) -> None:
         self.count = 0
@@ -90,7 +90,8 @@ class ModelManager:
         model_index_reset_delta: float = 300.0,
     ) -> None:
         if len(models) < 1:
-            raise ValueError("You must provide atleast one model")
+            msg = "You must provide atleast one model"
+            raise ValueError(msg)
 
         self._models = models
         self._current_model_index = 0
@@ -113,15 +114,13 @@ class ModelManager:
             initial_index = self._current_model_index
 
             if (
-                first_model_delta := self._failure_count[
-                    self._models[0]
-                ].last_report_delta()
+                first_model_delta := self._failure_count[self._models[0]].last_report_delta()
             ) and first_model_delta.total_seconds() >= self._model_index_reset_delta:
                 logger.debug(
                     f"First model last report delta ({first_model_delta}) >= model index delta, reseting model failures"
                 )
                 self._current_model_index = 0
-                for model in self._failure_count.keys():
+                for model in self._failure_count.keys():  # noqa: SIM118
                     self._failure_count[model].reset()
                 return
 
@@ -130,9 +129,7 @@ class ModelManager:
                 if self._failure_count[model].count < self._failure_threshold:
                     break
 
-                self._current_model_index = (self._current_model_index + 1) % len(
-                    self._models
-                )
+                self._current_model_index = (self._current_model_index + 1) % len(self._models)
 
                 if self._current_model_index == initial_index:
                     raise NoMoreModelsAvailableError()
@@ -147,9 +144,10 @@ class ModelManager:
                 else:
                     self._failure_count[model].count = 1
 
-                self._failure_count[model].last_report = datetime.now()
-            except KeyError:
-                raise ValueError(f"Model {model!r} not found")
+                self._failure_count[model].last_report = datetime.now(tz=UTC)
+            except KeyError as exc:
+                msg = f"Model {model!r} not found"
+                raise ValueError(msg) from exc
 
 
 class ChatCompletionMessage(TypedDict):
@@ -202,9 +200,7 @@ class LLMClient:
             else:
                 asyncio.run(self._client.close())
 
-    async def _chat_completion(
-        self, model: str, messages: list[ChatCompletionMessage]
-    ) -> aiohttp.ClientResponse:
+    async def _chat_completion(self, model: str, messages: list[ChatCompletionMessage]) -> aiohttp.ClientResponse:
         payload = {
             "model": model,
             "messages": messages,
@@ -213,9 +209,7 @@ class LLMClient:
         response = await self._client.post(self._chat_completion_path, json=payload)
         return response
 
-    def _create_espi_summary_messages(
-        self, page_content: str
-    ) -> list[ChatCompletionMessage]:
+    def _create_espi_summary_messages(self, page_content: str) -> list[ChatCompletionMessage]:  # noqa: PLR6301
         return [
             {
                 "role": "system",
@@ -230,9 +224,7 @@ class LLMClient:
             },
         ]
 
-    async def get_espi_summary(
-        self, model: str, page_content: str
-    ) -> tuple[EspiLLMSummary, str]:
+    async def get_espi_summary(self, model: str, page_content: str) -> tuple[EspiLLMSummary, str]:
         """
         tuple[EspiLLMSummary, str] -> EspiLLMSummary, used model
         """
@@ -242,9 +234,7 @@ class LLMClient:
         data = await response.json()
         logger.debug(data)
 
-        llm_summary = EspiLLMSummary.model_validate_json(
-            data["choices"][0]["message"]["content"]
-        )
+        llm_summary = EspiLLMSummary.model_validate_json(data["choices"][0]["message"]["content"])
         return llm_summary, model
 
     @staticmethod
@@ -252,10 +242,7 @@ class LLMClient:
         """
         Sanity check for LLM response
         """
-        if "Summary of the ESPI report" in item.description:
-            return False
-
-        return True
+        return "Summary of the ESPI report" not in item.description
 
 
 class LLMClientManaged(LLMClient):
@@ -280,7 +267,7 @@ class LLMClientManaged(LLMClient):
         sleep_on_failure: bool = True,
         sleep_amount: int = 5,
     ) -> tuple[EspiLLMSummary, str] | None:
-        hash = hashlib.blake2b(page_content.encode()).hexdigest()[:10]
+        page_hash = hashlib.blake2b(page_content.encode()).hexdigest()[:10]
         try:
             while True:
                 model = await self._manager.model
@@ -289,36 +276,32 @@ class LLMClientManaged(LLMClient):
                 for _ in range(tries_per_model):
                     check_model = await self._manager.model
                     if check_model != model:
-                        logger.debug(
-                            f"[{hash}] new model from manager: {model} -> {check_model}"
-                        )
+                        logger.debug(f"[{page_hash}] new model from manager: {model} -> {check_model}")
                         break
-                    logger.debug(f"[{hash}] trying {model} for {_} time")
+                    logger.debug(f"[{page_hash}] trying {model} for {_} time")
                     try:
                         result = await self.get_espi_summary(model, page_content)
                     except pydantic.ValidationError:
-                        logger.warning(f"[{hash}] pydantic validation error")
+                        logger.warning(f"[{page_hash}] pydantic validation error")
                         if sleep_on_failure:
-                            logger.info(f"[{hash}] sleeping for {sleep_amount}s")
+                            logger.info(f"[{page_hash}] sleeping for {sleep_amount}s")
                             await asyncio.sleep(sleep_amount)
                     except (
                         aiohttp.ServerConnectionError,
                         aiohttp.ClientResponseError,
                     ) as exc:
-                        logger.warning(f"[{hash}] aiohttp error: {str(exc)}")
+                        logger.warning(f"[{page_hash}] aiohttp error: {exc!s}")
                         await self._manager.report_model_failure(model)
                         if sleep_on_failure:
-                            logger.info(f"[{hash}] sleeping for {sleep_amount}s")
+                            logger.info(f"[{page_hash}] sleeping for {sleep_amount}s")
                             await asyncio.sleep(sleep_amount)
                         continue
                     else:
                         if not LLMClient.is_llm_espi_summary_valid(result[0]):
-                            logger.debug(
-                                f"[{hash}] LLM respone not valid, trying again"
-                            )
+                            logger.debug(f"[{page_hash}] LLM respone not valid, trying again")
                             continue
 
-                        logger.debug(f"[{hash}] Received valid LLM response")
+                        logger.debug(f"[{page_hash}] Received valid LLM response")
                         return result
                 else:
                     # TODO: skip model at this point

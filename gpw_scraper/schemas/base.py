@@ -8,9 +8,7 @@ T = TypeVar("T")
 
 
 class BaseSchema(BaseModel_):
-    model_config = ConfigDict(
-        from_attributes=True, alias_generator=to_camel, populate_by_name=True
-    )
+    model_config = ConfigDict(from_attributes=True, alias_generator=to_camel, populate_by_name=True)
 
 
 class BaseSchemalId(BaseSchema, Generic[T]):

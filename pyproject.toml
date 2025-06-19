@@ -3,7 +3,7 @@ name = "gpw-scraper"
 version = "0.1.0"
 description = "gpw scraper"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.10.5",
     "alembic>=1.13.2",
@@ -12,19 +12,120 @@ dependencies = [
     "fastapi>=0.112.2",
     "httpx>=0.27.2",               # for async api test client
     "loguru>=0.7.2",
-    "playwright>=1.46.0",
-    "psycopg[binary]>=3.2.1",
+    "psycopg[c]>=3.2.1",
     "pydantic-settings>=2.4.0",
+    "redis>=5.0.8",
+    "sqlalchemy[asyncio]>=2.0.32",
+    "taskipy>=1.14.1",
+    "tzdata>=2024.2",
+    "uvicorn[standard]>=0.34.3",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.402",
+    "pytest>=8.3.3",
     "pytest-aiohttp>=1.0.5",
     "pytest-asyncio>=0.24.0",
-    "pytest>=8.3.2",
-    "redis>=5.0.8",
-    "ruff>=0.6.3",
-    "sqlalchemy[asyncio]>=2.0.32",
-    "tzdata>=2024.2",
-    "uvicorn[standard]",
+    "pytest-recording>=0.13.4",
+    "pytest-sugar>=1.0.0",
+    "ruff>=0.6.9",
+    "vcrpy>=7.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+include = ["gpw_scraper/**/*.py", "tests/**/*.py", "alembic/**/*.py"]
+
+[tool.ruff.lint]
+preview = true # preview features & checks, use with caution
+extend-select = [ # features in preview
+    "W292", # missing-newline-at-end-of-file
+]
+select = [
+    "A",
+    "B",
+    "C",
+    "DTZ",
+    "E",
+    "EM",
+    "F",
+    "FBT",    # Boolean trap
+    "I",
+    "ICN",
+    "ISC",
+    "N",
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+    "Q",
+    "RUF",
+    "S",
+    "SIM",
+    "T",
+    "TID",
+    "UP",
+    "W",
+    "YTT",
+    "RUF100", # Automatically remove unused # noqa directives
+]
+ignore = [
+    # Allow non-abstract empty methods in abstract base classes
+    "B027",
+    # Allow boolean positional values in function calls, like `dict.get(... True)`
+    "FBT003",
+    # Ignore checks for possible passwords
+    "S105",
+    "S106",
+    "S107",
+    # Ignore complexity
+    "C901",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLC1901", # empty string comparisons
+    "PLW2901", # `for` loop variable overwritten
+    "SIM114",  # Combine `if` branches using logical `or` operator
+    "E203",    # Whitespace before :, needed for black compatability and also `ruff format`
+    "ISC001",  # causes unexpected behaviour with formatter
+    "UP046",   # 3.13 generics syntax
+]
+unfixable = [
+    "F401", # Don't touch unused imports
 ]
 
 
+[tool.ruff.lint.isort]
+known-first-party = ["gpw_scraper"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+# Allow print/pprint
+"examples/*" = ["T201"]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252", "DTZ001", "E501", "RUF029"]
+"tests/_scrape_pap_html.py" = ["T201"]
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+reportUnnecessaryTypeIgnoreComment = true
+venvPath = ".venv"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.taskipy.tasks]
+lint = { cmd = "ruff format --check . && ruff check ." }
+format = { cmd = "ruff format . && ruff check --fix ." }
+typecheck = { cmd = "pyright --warnings ." }

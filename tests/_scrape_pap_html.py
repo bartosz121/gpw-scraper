@@ -14,7 +14,7 @@ import asyncio
 import itertools
 import os
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -22,19 +22,14 @@ from bs4 import BeautifulSoup
 
 def parse_date(v: str) -> datetime:
     try:
-        return datetime.strptime(v, "%Y/%m/%d")
-    except Exception:
-        raise argparse.ArgumentTypeError(
-            "Not a valid datetime, expected YYYY/MM/DD format"
-        )
+        return datetime.strptime(v, "%Y/%m/%d").replace(tzinfo=UTC)
+    except Exception as exc:
+        msg = "Not a valid datetime, expected YYYY/MM/DD format"
+        raise argparse.ArgumentTypeError(msg) from exc
 
 
-async def visit_and_download(
-    session: aiohttp.ClientSession, path: str, base_url: str, href: str
-):
-    response = await session.get(
-        base_url + href, params={"_x_tr_sl": "en", "_x_tr_tl": "pl", "_x_tr_hl": "en"}
-    )
+async def visit_and_download(session: aiohttp.ClientSession, path: str, base_url: str, href: str):
+    response = await session.get(base_url + href, params={"_x_tr_sl": "en", "_x_tr_tl": "pl", "_x_tr_hl": "en"})
     response.raise_for_status()
 
     content = await response.text()
@@ -42,20 +37,20 @@ async def visit_and_download(
     pattern = r"/node/(\d+)\?"
     match_ = re.search(pattern, href)
     # path = os.path.join(path, f"{href.strip("/node/")}.html")
-    path = os.path.join(path, f"{match_.group(1)}.html")
-    with open(path, "w") as file:
+    path = os.path.join(path, f"{match_.group(1)}.html")  # type: ignore
+    with open(path, "w", encoding="utf-8") as file:
         print(f"Content saved to {path}")
         file.write(content)
 
 
 async def find_hrefs(path: str) -> list[str]:
-    with open(path, "r") as file:
+    with open(path, encoding="utf-8") as file:
         soup = BeautifulSoup(file.read(), features="html.parser")
         news = soup.find_all("li", attrs={"class": "news"})
-        return [item.select("a")[0]["href"] for item in news]
+        return [item.select("a")[0]["href"] for item in news]  # type: ignore
 
 
-async def main():
+async def main():  # noqa: PLR0914
     parser = argparse.ArgumentParser(
         prog="espiebi.pap.pl-scraper",
         description="espiebi.pap.pl scrape html for tests",
@@ -102,7 +97,7 @@ async def main():
                 print(f"h2 with {date_str} not found at {response.url!s}")
 
             path = os.path.join(args.dest, f"page_{page}.html")
-            with open(path, "w") as file:
+            with open(path, "w", encoding="utf-8") as file:
                 file.write(content)
                 print(f"Content saved to {path}")
             paths.append(path)

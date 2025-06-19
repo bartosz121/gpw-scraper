@@ -8,7 +8,7 @@ from gpw_scraper import utils
 from gpw_scraper.models.base import BaseModel
 
 
-class EntryType(str, enum.Enum):
+class EntryType(enum.StrEnum):
     ESPI = "espi"
     EBI = "ebi"
 
@@ -24,6 +24,4 @@ class EspiEbi(BaseModel):
     source: Mapped[str] = mapped_column(unique=True)
     parsed_by_llm: Mapped[str | None] = mapped_column()
     date: Mapped[datetime] = mapped_column()
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=utils.utc_now
-    )
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), default=utils.utc_now)

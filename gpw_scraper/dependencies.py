@@ -25,26 +25,22 @@ async def get_db_session():
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 
 
-async def get_espi_ebi_service(db: DbSession) -> SQLAEspiEbiService:
+async def get_espi_ebi_service(db: DbSession) -> SQLAEspiEbiService:  # noqa: RUF029
     return SQLAEspiEbiService(db)
 
 
 EspiEbiService = Annotated[SQLAEspiEbiService, Depends(get_espi_ebi_service)]
 
 
-async def get_webhook_user_service(db: DbSession) -> SQLAWebhookUserService:
+async def get_webhook_user_service(db: DbSession) -> SQLAWebhookUserService:  # noqa: RUF029
     return SQLAWebhookUserService(db)
 
 
-WebhookUserService = Annotated[
-    SQLAWebhookUserService, Depends(get_webhook_user_service)
-]
+WebhookUserService = Annotated[SQLAWebhookUserService, Depends(get_webhook_user_service)]
 
 
-async def get_webhook_endpoint_service(db: DbSession) -> SQLAWebhookEndpointService:
+async def get_webhook_endpoint_service(db: DbSession) -> SQLAWebhookEndpointService:  # noqa: RUF029
     return SQLAWebhookEndpointService(db)
 
 
-WebhookEndpointService = Annotated[
-    SQLAWebhookEndpointService, Depends(get_webhook_endpoint_service)
-]
+WebhookEndpointService = Annotated[SQLAWebhookEndpointService, Depends(get_webhook_endpoint_service)]

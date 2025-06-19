@@ -1,5 +1,5 @@
-import os
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import aiohttp
 import httpx
@@ -12,8 +12,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from gpw_scraper.api import create_app
 from gpw_scraper.config import settings
 from gpw_scraper.models.base import BaseModel
+from gpw_scraper.scrapers.pap import EspiEbiPapScraper
 
-HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "html")
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {
+        "ignore_localhost": True,
+        "record_mode": "rewrite",
+        "cassette_library_dir": "tests/cassettes",
+    }
 
 
 @pytest.fixture
@@ -24,9 +32,7 @@ async def arq_pool():
 
 @pytest.fixture
 async def redis_conn():
-    redis = Redis(
-        host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True
-    )
+    redis = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True)
     await redis.flushall()
     yield redis
     await redis.aclose()
@@ -55,35 +61,8 @@ async def db_session(db_sessionmaker):
 
 
 @pytest.fixture
-async def pap_test_client(aiohttp_client):
-    async def pap_1(request: web.Request) -> web.Response:
-        page_n = request.query["page"]
-        path = os.path.join(HTML_PATH, f"page_{page_n}.html")
-        if not os.path.exists(path):
-            raise web.HTTPNotFound()
-
-        with open(path, "r") as file:
-            return web.Response(body=file.read())
-
-    async def pap_2(request: web.Request) -> web.Response:
-        id = request.match_info.get("id")
-        if id is None:
-            raise web.HTTPNotFound()
-
-        path = os.path.join(HTML_PATH, f"{id}.html")
-        if not os.path.exists(path):
-            raise web.HTTPNotFound()
-
-        with open(path, "r") as file:
-            return web.Response(body=file.read())
-
-    app = web.Application()
-    app.router.add_get("/wyszukiwarka", pap_1)
-    app.router.add_get("/node/{id}", pap_2)
-
-    client = await aiohttp_client(app)
-    setattr(client, "_base_url", "")
-    yield client
+async def pap_test_client():
+    return aiohttp.ClientSession(base_url=EspiEbiPapScraper.url)
 
 
 @pytest.fixture
@@ -92,7 +71,7 @@ async def llm_rest_api_client(aiohttp_client):
         body = await request.json()
         req_model: str = body["model"]
         if req_model.startswith("respond_with"):
-            fake_code = req_model.split("_")[-1]
+            fake_code = req_model.split("_")[-1]  # noqa: PLC0207
 
             class FakeError(web.HTTPException):
                 status_code = int(fake_code)
@@ -123,7 +102,7 @@ async def llm_rest_api_client(aiohttp_client):
     app.router.add_post("/api/v1/chat/completions", chat_completions)
 
     client = await aiohttp_client(app)
-    setattr(client, "_base_url", "")
+    client._base_url = ""
     yield client
 
 
@@ -139,7 +118,5 @@ async def open_router_client():
 @pytest.fixture
 async def api_client():
     app = create_app()
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         yield client
