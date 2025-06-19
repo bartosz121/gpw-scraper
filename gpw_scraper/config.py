@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     ENVIRONMENT: Environment = Environment.LOCAL
+    SEND_WEBHOOK_TASKS_ENABLED: bool = True
     LOG_LEVEL: str = "DEBUG"
 
     OPENROUTER_BASE_URL: str = "https://openrouter.ai"

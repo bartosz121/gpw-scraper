@@ -106,6 +106,10 @@ async def dispatch_send_webhook_tasks(ctx, espi_ebi_entry_id: int):
 
 
 async def send_webhook(ctx, espi_ebi: EspiEbi, endpoint: WebhookEndpoint, *, dry_run: bool = False):
+    if not settings.SEND_WEBHOOK_TASKS_ENABLED:
+        logger.info(f"Webhook tasks are disabled, not sending webhook for {espi_ebi.id} to {endpoint.url!s}")
+        return
+
     db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
     async with db_sessionmaker() as session:
         event_service = SQLAWebhookEventService(session)
