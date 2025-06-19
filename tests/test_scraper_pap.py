@@ -1,11 +1,15 @@
 from datetime import datetime
 from unittest import mock
 
+import pytest
+
 from gpw_scraper.llm import LLMClientManaged, ModelManager
 from gpw_scraper.schemas.espi_ebi import EspiLLMSummary
 from gpw_scraper.scrapers.pap import EspiEbiPapScraper
 
 
+@pytest.mark.block_network
+@pytest.mark.vcr
 async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
     expected = {
         "https://espiebi.pap.pl/node/560617": {
@@ -33,7 +37,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
             "company": "GENXONE",
             "source": "https://espiebi.pap.pl/node/667706",
             "parsed_by_llm": None,
-            "date": datetime(2024, 7, 22, 21, 54),
+            "date": datetime(2024, 7, 22, 17, 54),
         },
         "https://espiebi.pap.pl/node/560615": {
             "type": "ESPI",
@@ -60,7 +64,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
             "company": "BIOMASS",
             "source": "https://espiebi.pap.pl/node/667705",
             "parsed_by_llm": None,
-            "date": datetime(2024, 7, 22, 20, 52),
+            "date": datetime(2024, 7, 22, 16, 52),
         },
         "https://espiebi.pap.pl/node/560613": {
             "type": "ESPI",
@@ -141,7 +145,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
             "company": "GREEN ZEBRAS",
             "source": "https://espiebi.pap.pl/node/667704",
             "parsed_by_llm": None,
-            "date": datetime(2024, 7, 22, 20, 22),
+            "date": datetime(2024, 7, 22, 16, 22),
         },
         "https://espiebi.pap.pl/node/667703": {
             "type": "EBI",
@@ -150,7 +154,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
             "company": "GREEN ZEBRAS",
             "source": "https://espiebi.pap.pl/node/667703",
             "parsed_by_llm": None,
-            "date": datetime(2024, 7, 22, 20, 15),
+            "date": datetime(2024, 7, 22, 16, 15),
         },
         "https://espiebi.pap.pl/node/560605": {
             "type": "ESPI",
@@ -177,7 +181,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
             "company": "TELESTRADA",
             "source": "https://espiebi.pap.pl/node/667702",
             "parsed_by_llm": None,
-            "date": datetime(2024, 7, 22, 17, 43),
+            "date": datetime(2024, 7, 22, 13, 43),
         },
         "https://espiebi.pap.pl/node/560603": {
             "type": "ESPI",
@@ -326,7 +330,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560587": {
             "type": "ESPI",
             "title": "Zgoda Komisji Nadzoru Finansowego na powołanie Pana Mirosława Czekaja na stanowisko Prezesa Zarządu Banku Gospodarstwa Krajowego.",
-            "description": "Podstawa prawna:§ 5 pkt 5",
+            "description": "Podstawa prawna: § 5 pkt ",
             "company": "BANK GOSPODARSTWA KRAJOWEGO",
             "source": "https://espiebi.pap.pl/node/560587",
             "parsed_by_llm": None,
@@ -335,7 +339,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
         "https://espiebi.pap.pl/node/560586": {
             "type": "ESPI",
             "title": "Zgoda Komisji Nadzoru Finansowego na powołanie Pana Mirosława Czekaja na stanowisko Prezesa Zarządu Banku Gospodarstwa Krajowego.",
-            "description": "Podstawa prawna:§ 5 pkt 5",
+            "description": "Podstawa prawna: § 5 pkt ",
             "company": "BANK GOSPODARSTWA KRAJOWEGO",
             "source": "https://espiebi.pap.pl/node/560586",
             "parsed_by_llm": None,
@@ -592,6 +596,42 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
             "source": "https://espiebi.pap.pl/node/560558",
             "parsed_by_llm": None,
             "date": datetime(2024, 7, 22, 7, 20),
+        },
+        "https://espiebi.pap.pl/node/667707": {
+            "company": "ECNOLOGY",
+            "date": datetime(2024, 7, 22, 21, 48),
+            "description": "Zarząd ECNOLOGY GROUP SA ",
+            "parsed_by_llm": None,
+            "source": "https://espiebi.pap.pl/node/667707",
+            "title": "Rezygnacja Członka Rady Nadzorczej",
+            "type": "EBI",
+        },
+        "https://espiebi.pap.pl/node/667708": {
+            "company": "HIPOWERSA",
+            "date": datetime(2024, 7, 22, 22, 12),
+            "description": "hiPower Energy S.A. (dale",
+            "parsed_by_llm": None,
+            "source": "https://espiebi.pap.pl/node/667708",
+            "title": "Zmiana środka dyscyplinującego nałożonego na Emitenta przez GPW",
+            "type": "EBI",
+        },
+        "https://espiebi.pap.pl/node/667709": {
+            "company": "HIPOWERSA",
+            "date": datetime(2024, 7, 22, 22, 12),
+            "description": "hiPower Energy S.A. (dale",
+            "parsed_by_llm": None,
+            "source": "https://espiebi.pap.pl/node/667709",
+            "title": "Zmiana środka dyscyplinującego nałożonego na Emitenta przez GPW",
+            "type": "EBI",
+        },
+        "https://espiebi.pap.pl/node/667710": {
+            "company": "BINARY HELIX",
+            "date": datetime(2024, 7, 22, 22, 22),
+            "description": "Zarząd Binary Helix SA in",
+            "parsed_by_llm": None,
+            "source": "https://espiebi.pap.pl/node/667710",
+            "title": "Zawiadomienie o nabyciu akcji przez Prezesa Zarządu",
+            "type": "EBI",
         },
     }
 

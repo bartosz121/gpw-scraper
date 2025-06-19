@@ -1,4 +1,3 @@
-import os
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -13,8 +12,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from gpw_scraper.api import create_app
 from gpw_scraper.config import settings
 from gpw_scraper.models.base import BaseModel
+from gpw_scraper.scrapers.pap import EspiEbiPapScraper
 
-HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "html")
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {
+        "ignore_localhost": True,
+        "record_mode": "rewrite",
+        "cassette_library_dir": "tests/cassettes",
+    }
 
 
 @pytest.fixture
@@ -54,35 +61,8 @@ async def db_session(db_sessionmaker):
 
 
 @pytest.fixture
-async def pap_test_client(aiohttp_client):
-    async def pap_1(request: web.Request) -> web.Response:
-        page_n = request.query["page"]
-        path = os.path.join(HTML_PATH, f"page_{page_n}.html")
-        if not os.path.exists(path):
-            raise web.HTTPNotFound()
-
-        with open(path, encoding="utf-8") as file:
-            return web.Response(body=file.read())
-
-    async def pap_2(request: web.Request) -> web.Response:
-        r_id = request.match_info.get("id")
-        if r_id is None:
-            raise web.HTTPNotFound()
-
-        path = os.path.join(HTML_PATH, f"{r_id}.html")
-        if not os.path.exists(path):
-            raise web.HTTPNotFound()
-
-        with open(path, encoding="utf-8") as file:
-            return web.Response(body=file.read())
-
-    app = web.Application()
-    app.router.add_get("/wyszukiwarka", pap_1)
-    app.router.add_get("/node/{id}", pap_2)
-
-    client = await aiohttp_client(app)
-    client._base_url = ""
-    yield client
+async def pap_test_client():
+    return aiohttp.ClientSession(base_url=EspiEbiPapScraper.url)
 
 
 @pytest.fixture
