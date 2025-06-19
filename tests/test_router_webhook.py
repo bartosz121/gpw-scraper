@@ -14,21 +14,14 @@ class WebhookDbData(TypedDict):
 
 @pytest.fixture
 async def webhook_db_data(db_session: AsyncSession) -> WebhookDbData:
-    users = [
-        webhook_models.WebhookUser(name=f"user_{i}", api_key=f"api-key-{i}")
-        for i in range(3)
-    ]
+    users = [webhook_models.WebhookUser(name=f"user_{i}", api_key=f"api-key-{i}") for i in range(3)]
     db_session.add_all(users)
     await db_session.flush()
 
     secret = "secret123"
     endpoints = [
-        webhook_models.WebhookEndpoint(
-            url="http://webhook-endpoint/", secret=secret, user_id=users[0].id
-        ),
-        webhook_models.WebhookEndpoint(
-            url="http://webhook-endpoint/", secret=secret, user_id=users[1].id
-        ),
+        webhook_models.WebhookEndpoint(url="http://webhook-endpoint/", secret=secret, user_id=users[0].id),
+        webhook_models.WebhookEndpoint(url="http://webhook-endpoint/", secret=secret, user_id=users[1].id),
     ]
     db_session.add_all(endpoints)
 
@@ -82,9 +75,7 @@ async def test_router_webhook_create_endpoint_wrong_authorization_header(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-async def test_router_webhook_create_endpoint_url_already_exists_in_db(
-    webhook_db_data, api_client
-):
+async def test_router_webhook_create_endpoint_url_already_exists_in_db(webhook_db_data, api_client):
     data = {"url": "http://webhook-endpoint/"}
 
     response = await api_client.post(
@@ -136,9 +127,7 @@ async def test_router_webhook_delete_endpoint_wrong_authorization_header(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-async def test_router_webhook_delete_endpoint_403_if_not_found(
-    webhook_db_data, api_client
-):
+async def test_router_webhook_delete_endpoint_403_if_not_found(webhook_db_data, api_client):
     response = await api_client.delete(
         "/api/v1/webhooks/endpoints/111",
         headers={"Authorization": f"Bearer {webhook_db_data['users'][0].api_key}"},
@@ -146,9 +135,7 @@ async def test_router_webhook_delete_endpoint_403_if_not_found(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-async def test_router_webhook_delete_endpoint_403_if_not_owner(
-    webhook_db_data, api_client
-):
+async def test_router_webhook_delete_endpoint_403_if_not_owner(webhook_db_data, api_client):
     response = await api_client.delete(
         f"/api/v1/webhooks/endpoints/{webhook_db_data['endpoints'][1].id}",
         headers={"Authorization": f"Bearer {webhook_db_data['users'][0].api_key}"},

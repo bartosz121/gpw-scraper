@@ -6,9 +6,7 @@ class SQLAWebhookUserService(SQLAlchemyService[webhooks_models.WebhookUser, int]
     model = webhooks_models.WebhookUser
 
 
-class SQLAWebhookEndpointService(
-    SQLAlchemyService[webhooks_models.WebhookEndpoint, int]
-):
+class SQLAWebhookEndpointService(SQLAlchemyService[webhooks_models.WebhookEndpoint, int]):
     model = webhooks_models.WebhookEndpoint
 
 

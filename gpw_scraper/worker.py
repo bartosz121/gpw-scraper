@@ -1,6 +1,6 @@
 import asyncio
 import base64
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiohttp
 import redis.asyncio as redis
@@ -37,13 +37,8 @@ async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
     async with db_sessionmaker() as session:
         espi_ebi_service = SQLAEspiEbiService(session=session)
 
-        already_in_db_at_date_range = await espi_ebi_service.list_in_date_range(
-            date_start, date_end
-        )
-        ignore_list = [
-            item.source[item.source.rindex("node") - 1 :]
-            for item in already_in_db_at_date_range
-        ]
+        already_in_db_at_date_range = await espi_ebi_service.list_in_date_range(date_start, date_end)
+        ignore_list = [item.source[item.source.rindex("node") - 1 :] for item in already_in_db_at_date_range]
 
         logger.info(f"{ignore_list=}")
 
@@ -52,9 +47,7 @@ async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
         filtered_hrefs: list[PapHrefItem] = []
 
         for href_item in hrefs:
-            logger.debug(
-                f"{href_item.href} Checking if item is in ignore list or in progress"
-            )
+            logger.debug(f"{href_item.href} Checking if item is in ignore list or in progress")
             if href_item.href not in ignore_list:
                 logger.debug(f"{href_item.href} Not in ignore list")
 
@@ -93,7 +86,7 @@ async def scrape_pap_espi_ebi(ctx, date_start: datetime, date_end: datetime):
 
 
 async def cron_scrape_pap_espi_ebi(ctx):
-    await scrape_pap_espi_ebi(ctx, datetime.now(), datetime.now())
+    await scrape_pap_espi_ebi(ctx, datetime.now(tz=UTC), datetime.now(tz=UTC))
 
 
 async def dispatch_send_webhook_tasks(ctx, espi_ebi_entry_id: int):
@@ -109,35 +102,25 @@ async def dispatch_send_webhook_tasks(ctx, espi_ebi_entry_id: int):
         logger.info(f"Queuing {len(endpoints)} webhook messages to be sent")
         for endpoint in endpoints:
             logger.error(settings.ENVIRONMENT.is_qa)
-            await pool.enqueue_job(
-                "send_webhook", espi_ebi, endpoint, dry_run=settings.ENVIRONMENT.is_qa
-            )
+            await pool.enqueue_job("send_webhook", espi_ebi, endpoint, dry_run=settings.ENVIRONMENT.is_qa)
 
 
-async def send_webhook(
-    ctx, espi_ebi: EspiEbi, endpoint: WebhookEndpoint, *, dry_run: bool = False
-):
+async def send_webhook(ctx, espi_ebi: EspiEbi, endpoint: WebhookEndpoint, *, dry_run: bool = False):
     db_sessionmaker: async_sessionmaker[AsyncSession] = ctx["db_sessionmaker"]
     async with db_sessionmaker() as session:
         event_service = SQLAWebhookEventService(session)
-        payload = EspiEbiItem.model_validate(espi_ebi).model_dump(
-            mode="json", by_alias=True
-        )
+        payload = EspiEbiItem.model_validate(espi_ebi).model_dump(mode="json", by_alias=True)
         event = WebhookEvent(webhook_id=endpoint.id, espi_ebi_id=espi_ebi.id)
         retry_job = False
 
         async with aiohttp.ClientSession() as client:
             try:
                 if dry_run:
-                    logger.info(
-                        f"Would have sent espi ebi #{espi_ebi.id} payload to {endpoint.url!s}"
-                    )
+                    logger.info(f"Would have sent espi ebi #{espi_ebi.id} payload to {endpoint.url!s}")
                     event.meta = {"dry_run": True}
                     response_status = 200
                 else:
-                    b64_secret = base64.b64encode(
-                        endpoint.secret.encode("utf-8")
-                    ).decode("utf-8")
+                    b64_secret = base64.b64encode(endpoint.secret.encode("utf-8")).decode("utf-8")
                     # TODO: .post should be used as context manager
                     response = await client.post(
                         endpoint.url,
@@ -192,7 +175,7 @@ async def send_webhook(
                     raise Retry(defer=ctx["job_try"] * 5)
 
 
-async def startup(ctx):
+async def startup(ctx):  # noqa: RUF029
     ctx["redis_client"] = redis.Redis(
         host=settings.REDIS_HOST,
         port=settings.REDIS_PORT,
@@ -244,7 +227,7 @@ class WorkerSettings:
     redis_settings = settings.ARQ_REDIS_SETTINGS
     max_tries = 3
     retry_jobs = True
-    functions = [scrape_pap_espi_ebi, dispatch_send_webhook_tasks, send_webhook]
+    functions = [scrape_pap_espi_ebi, dispatch_send_webhook_tasks, send_webhook]  # noqa: RUF012
     cron_jobs: list[CronJob] | None = (
         None
         if settings.ENVIRONMENT.is_qa

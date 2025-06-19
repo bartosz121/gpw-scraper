@@ -598,9 +598,7 @@ async def test_espi_ebi_pap_scraper_scrape(pap_test_client):
     scraper = EspiEbiPapScraper()
 
     dt = datetime(year=2024, month=7, day=22)
-    async with LLMClientManaged(
-        "http://localhost", "", "", manager=ModelManager(["model_1"])
-    ) as client_1:
+    async with LLMClientManaged("http://localhost", "", "", manager=ModelManager(["model_1"])) as client_1:
         with mock.patch.object(client_1, "get_espi_summary") as mock_fn:
             mock_fn.return_value = (
                 EspiLLMSummary(title="LLM_TITLE", description="LLM_DESCRIPTION"),

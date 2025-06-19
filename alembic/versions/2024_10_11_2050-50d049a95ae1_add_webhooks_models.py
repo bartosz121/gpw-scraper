@@ -6,7 +6,7 @@ Create Date: 2024-10-11 20:50:57.657544
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -16,9 +16,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "50d049a95ae1"
-down_revision: Union[str, None] = "14ce2b33f7e3"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "14ce2b33f7e3"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -75,9 +75,7 @@ def upgrade() -> None:
         ["created_at"],
         unique=False,
     )
-    op.create_index(
-        op.f("ix_webhook_endpoints_id"), "webhook_endpoints", ["id"], unique=False
-    )
+    op.create_index(op.f("ix_webhook_endpoints_id"), "webhook_endpoints", ["id"], unique=False)
     op.create_index(
         op.f("ix_webhook_endpoints_updated_at"),
         "webhook_endpoints",
@@ -121,9 +119,7 @@ def upgrade() -> None:
         ["created_at"],
         unique=False,
     )
-    op.create_index(
-        op.f("ix_webhook_events_id"), "webhook_events", ["id"], unique=False
-    )
+    op.create_index(op.f("ix_webhook_events_id"), "webhook_events", ["id"], unique=False)
     op.create_index(
         op.f("ix_webhook_events_updated_at"),
         "webhook_events",
@@ -158,13 +154,9 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_webhook_events_created_at"), table_name="webhook_events")
     op.drop_table("webhook_events")
     op.drop_index(op.f("ix_webhook_endpoints_user_id"), table_name="webhook_endpoints")
-    op.drop_index(
-        op.f("ix_webhook_endpoints_updated_at"), table_name="webhook_endpoints"
-    )
+    op.drop_index(op.f("ix_webhook_endpoints_updated_at"), table_name="webhook_endpoints")
     op.drop_index(op.f("ix_webhook_endpoints_id"), table_name="webhook_endpoints")
-    op.drop_index(
-        op.f("ix_webhook_endpoints_created_at"), table_name="webhook_endpoints"
-    )
+    op.drop_index(op.f("ix_webhook_endpoints_created_at"), table_name="webhook_endpoints")
     op.drop_table("webhook_endpoints")
     op.drop_index(op.f("ix_webhook_users_updated_at"), table_name="webhook_users")
     op.drop_index(op.f("ix_webhook_users_id"), table_name="webhook_users")

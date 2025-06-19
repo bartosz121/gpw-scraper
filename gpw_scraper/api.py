@@ -1,5 +1,6 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, TypedDict
+from typing import TypedDict
 
 from fastapi import FastAPI
 
@@ -11,7 +12,7 @@ class State(TypedDict): ...
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[State]:
+async def lifespan(app: FastAPI) -> AsyncIterator[State]:  # noqa: RUF029
     yield {}
 
 

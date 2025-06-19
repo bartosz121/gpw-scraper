@@ -20,7 +20,7 @@ engine = create_engine(settings.DB_URL, echo=settings.ENVIRONMENT.is_qa)
 session_factory = sessionmaker(engine)
 
 
-class BaseModel(AsyncAttrs, DeclarativeBase):
+class BaseModel(AsyncAttrs, DeclarativeBase):  # noqa: PLW1641
     __abstract__ = True
 
     _eq_attr_name: str = "id"
@@ -34,9 +34,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
         if self_eq_attr_val is None or value_eq_attr_val is None:
             return False
 
-        return (
-            isinstance(value, self.__class__) and self_eq_attr_val == value_eq_attr_val
-        )
+        return isinstance(value, self.__class__) and self_eq_attr_val == value_eq_attr_val
 
     def __repr__(self) -> str:
         id_value = getattr(self, self._eq_attr_name)
