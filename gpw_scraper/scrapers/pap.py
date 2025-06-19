@@ -160,7 +160,7 @@ class EspiEbiPapScraper:
         soup = BeautifulSoup(content, features="html.parser")
 
         logger.debug(f"{href_item.href} Looking for item type")
-        source_sibling_div = soup.find("div", text=re.compile(r"Źródło (raportu|danych)"))
+        source_sibling_div = soup.find("div", string=re.compile(r"Źródło (raportu|danych)"))
         if source_sibling_div is None:
             msg = f"Source sibling div not found in {href_item.href}"
             logger.warning(msg)
