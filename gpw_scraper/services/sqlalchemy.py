@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from typing import Any, Generic, Literal, NamedTuple, TypeVar
 
 from loguru import logger
-from sqlalchemy import Column, Select, asc, desc, select, text
+from sqlalchemy import Column, Select, asc, desc, over, select, text
 from sqlalchemy import func as sqla_func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -275,18 +275,29 @@ class SQLAlchemyService(Generic[T, U]):
         auto_expunge: bool | None = None,
         **kwargs: Any,
     ) -> tuple[list[T], int]:
-        stmt = self._get_statement(statement)
-        stmt = self._where_from_kwargs(stmt, **kwargs)
-        stmt = self._paginate_from_kwargs(stmt, **kwargs)
-        stmt = self._order_by_from_kwargs(stmt, **kwargs)
-
         with sql_error_handler():
-            count_result = await self.count(statement, **kwargs)
-            items = list((await self.session.execute(stmt)).scalars())
+            stmt = self._get_statement(statement)
+            stmt = self._where_from_kwargs(stmt, **kwargs)
+            stmt = self._order_by_from_kwargs(stmt, **kwargs)
+            stmt = self._paginate_from_kwargs(stmt, **kwargs)
 
-            for item in items:
-                self._expunge(item, auto_expunge=auto_expunge)
-            return (items, count_result)
+            stmt = stmt.add_columns(over(sqla_func.count()))
+
+            result = await self.session.execute(stmt)
+            rows = result.all()
+
+            total_count = 0
+            items: list[T] = []
+
+            for i, row in enumerate(rows):
+                instance = row[0]
+                count_value = row[-1]
+                self._expunge(instance, auto_expunge=auto_expunge)
+                items.append(instance)
+                if i == 0:
+                    total_count = count_value
+
+            return items, total_count
 
     async def update(
         self,
