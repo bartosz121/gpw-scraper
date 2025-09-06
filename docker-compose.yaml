@@ -47,8 +47,13 @@ services:
       - POSTGRES_PASSWORD=password123
     ports:
       - 5432:5432
+    volumes:
+      - tsearch_data:/usr/local/share/postgresql/tsearch_data
   redis:
     image: redis:7.4.0-alpine
     container_name: scraper-redis
     ports:
       - 6379:6379
+
+volumes:
+  tsearch_data:
