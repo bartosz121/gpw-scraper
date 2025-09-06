@@ -29,3 +29,10 @@ services:
           action: sync
           ignore:
             - .venv/
+  db:
+    command: >
+      postgres
+      -c shared_preload_libraries=auto_explain
+      -c auto_explain.log_min_duration=0
+      -c auto_explain.log_analyze=on
+      -c auto_explain.log_verbose=on
