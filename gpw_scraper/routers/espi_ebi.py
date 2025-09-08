@@ -20,7 +20,7 @@ async def get_espi_ebi(
     espi_ebi_service: deps.EspiEbiService,
     pagination: Annotated[PaginationParams, Depends()],
     espi_or_ebi: Annotated[EntryType | None, Query(alias="filter")] = None,
-    fts: Annotated[str | None, Query(description="FTS search")] = None,
+    fts: Annotated[str | None, Query(description="FTS")] = None,
 ):
     stmt = select(EspiEbi)
 
