@@ -20,12 +20,18 @@ async def get_espi_ebi(
     espi_ebi_service: deps.EspiEbiService,
     pagination: Annotated[PaginationParams, Depends()],
     espi_or_ebi: Annotated[EntryType | None, Query(alias="filter")] = None,
+    company: Annotated[
+        str | None, Query(description="Filter by company; uses `ILIKE q`\n\n`%` allowed, e.g. `%orlen%`")
+    ] = None,
     fts: Annotated[str | None, Query(description="FTS")] = None,
 ):
     stmt = select(EspiEbi)
 
     if espi_or_ebi:
         stmt = stmt.where(EspiEbi.type == espi_or_ebi)
+
+    if company:
+        stmt = stmt.where(EspiEbi.company.ilike(company))
 
     if fts:
         ts_fts = func.plainto_tsquery("pl_ispell", fts)
